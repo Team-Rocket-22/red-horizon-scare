@@ -27,19 +27,28 @@ export class Space extends Scene {
         for (let i = 0; i < 10; i++) {
             this.asteroid_positions.push(Math.floor(Math.random() * (31) - 15 ))
         }
-        this.rocket_colors = [hex_color("#ffffff")]
+        // TODO: what rocket colors do we want
+        this.rocket_colors = [hex_color("#850e05"), hex_color("#050bb3"), hex_color("#4e4e54"), hex_color("#023b02")]
         this.current_rocket = 0
         this.initial_camera_location = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
+
+        this.hp = 3
     }
 
     change_background() {
-        this.current_background = (this.current_background + 1) % 3
+        this.current_background = (this.current_background + 1) % (this.background_colors.length)
     }
 
     change_rocket() {
-        this.current_rocket = (this.current_rocket + 1) % 1
+        this.current_rocket = (this.current_rocket + 1) % (this.rocket_colors.length)
     }
 
+    // TODO: call this function whenever rocket is hit or we collect a powerup
+    modify_hp(amount) {
+        this.hp += amount
+    }
+
+    // TODO: number of asteroids, asteroid speed? change based on level?
     asteroid_belt(t, context, program_state, model_transform) {
         let asteroids = []
         for (let i = 0; i < this.asteroid_positions.length; i++) {
@@ -50,20 +59,20 @@ export class Space extends Scene {
     }
 
     spawn_objects(t, context, program_state, model_transform) {
-        // what cadence do we want
+        // asteroid belt there and back
         if ((t >= 10 && t <= 20) || (t >= 110 && t <= 120)) {
             this.asteroid_belt(t, context, program_state, model_transform)
         }
+
     }
 
     make_control_panel() {
         // Draw the scene's buttons, setup their actions and keyboard shortcuts, and monitor live measurements.
         this.key_triggered_button("Change background color", ["b"], this.change_background);
-        this.key_triggered_button("Change rocket color", ["r"], this.change_rocket);
+        this.key_triggered_button("Change rocket color", ["c"], this.change_rocket);
     }
 
     display(context, program_state) {
-        // display():  Called once per frame of animation.
         // Setup -- This part sets up the scene's overall camera matrix, projection matrix, and lights:
         if (!context.scratchpad.controls) {
             this.children.push(context.scratchpad.controls = new defs.Movement_Controls());

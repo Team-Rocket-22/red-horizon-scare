@@ -23,6 +23,10 @@ export class Space extends Scene {
 
         this.background_colors = [hex_color("#000000"), hex_color("#000435"), hex_color("#36013f")]
         this.current_background = 0
+        this.asteroid_positions = []
+        for (let i = 0; i < 10; i++) {
+            this.asteroid_positions.push(Math.floor(Math.random() * (31) - 15 ))
+        }
         this.rocket_colors = [hex_color("#ffffff")]
         this.current_rocket = 0
         this.initial_camera_location = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
@@ -34,6 +38,22 @@ export class Space extends Scene {
 
     change_rocket() {
         this.current_rocket = (this.current_rocket + 1) % 1
+    }
+
+    asteroid_belt(t, context, program_state, model_transform) {
+        let asteroids = []
+        for (let i = 0; i < this.asteroid_positions.length; i++) {
+            asteroids[i] = model_transform
+            asteroids[i] = asteroids[i].times(Mat4.translation(this.asteroid_positions[i], 30 + (i * 5), 0)).times(Mat4.scale(1, 1.5, 1)).times(Mat4.translation(0, -(t % 10) * 7, 0))
+            this.shapes.asteroid.draw(context, program_state, asteroids[i], this.materials.asteroid)
+        }
+    }
+
+    spawn_objects(t, context, program_state, model_transform) {
+        // what cadence do we want
+        if ((t >= 10 && t <= 20) || (t >= 110 && t <= 120)) {
+            this.asteroid_belt(t, context, program_state, model_transform)
+        }
     }
 
     make_control_panel() {
@@ -60,7 +80,6 @@ export class Space extends Scene {
         program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 10**3)];
 
         let model_transform = Mat4.identity();
-        model_transform = model_transform.times(Mat4.translation(5, -5, 0)).times(Mat4.scale(1.5, 2, 1.5))
-        this.shapes.asteroid.draw(context, program_state, model_transform, this.materials.asteroid)
+        this.spawn_objects(t, context, program_state, model_transform)
     }
 }

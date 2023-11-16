@@ -15,6 +15,7 @@ export class Space extends Scene {
             asteroid: new Asteroid(),
             // asteroid: new defs.Subdivision_Sphere(4)
             heart: new Heart(),
+            satellite: new defs.Cylindrical_Tube(20, 20),
         };
 
         // *** Materials
@@ -23,6 +24,8 @@ export class Space extends Scene {
                 {ambient: 0.8, diffusivity: 0.5, specularity: 0.2, color: hex_color("#4b4e52")}),
             heart: new Material(new defs.Phong_Shader(),
                 {ambient: 0.8, diffusivity: 0.5, specularity: 0.2, color: hex_color("#880808")}),
+            satellite: new Material(new defs.Phong_Shader(),
+                {ambient: 0.8, diffusivity: 0.5, specularity: 0.2, color: hex_color("#F5F5DC")}),
         }
 
         this.background_colors = [hex_color("#000000"), hex_color("#000435"), hex_color("#36013f")]
@@ -67,6 +70,13 @@ export class Space extends Scene {
         let heart_transform = model_transform;
         heart_transform = heart_transform.times(Mat4.scale(1/14, 1/14, 1/14));
         this.shapes.heart.draw(context, program_state, heart_transform, this.materials.heart);
+    }
+
+    // TODO: add power (solar panels) onto satellite, add texture to panels
+    spawn_satellite(t, context, program_state, model_transform) {
+        let satellite_transform = model_transform;
+        satellite_transform = satellite_transform.times(Mat4.translation(0, 0, 0)).times(Mat4.rotation(Math.PI / 2, 1, 0, 0)).times(Mat4.scale(1, 1, 4));
+        this.shapes.satellite.draw(context, program_state, satellite_transform, this.materials.satellite);
     }
 
     spawn_objects(t, context, program_state, model_transform) {

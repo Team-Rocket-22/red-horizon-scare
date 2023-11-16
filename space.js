@@ -1,5 +1,6 @@
 import {defs, tiny} from './examples/common.js';
-import {Asteroid} from './asteroid.js'
+import {Asteroid} from './asteroid.js';
+import {Heart} from './shapes/heart.js'
 
 const {
     Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Material, Scene,
@@ -11,14 +12,17 @@ export class Space extends Scene {
         super();
         // At the beginning of our program, load one of each of these shape definitions onto the GPU.
         this.shapes = {
-            asteroid: new Asteroid()
+            asteroid: new Asteroid(),
             // asteroid: new defs.Subdivision_Sphere(4)
+            heart: new Heart(),
         };
 
         // *** Materials
         this.materials = {
             asteroid: new Material(new defs.Phong_Shader(),
                 {ambient: 0.8, diffusivity: 0.5, specularity: 0.2, color: hex_color("#4b4e52")}),
+            heart: new Material(new defs.Phong_Shader(),
+                {ambient: 0.8, diffusivity: 0.5, specularity: 0.2, color: hex_color("#880808")}),
         }
 
         this.background_colors = [hex_color("#000000"), hex_color("#000435"), hex_color("#36013f")]
@@ -58,12 +62,18 @@ export class Space extends Scene {
         }
     }
 
+    // TODO: fill in heart shape and transform to 3D
+    spawn_heart(t, context, program_state, model_transform) {
+        let heart_transform = model_transform;
+        heart_transform = heart_transform.times(Mat4.scale(1/14, 1/14, 1/14));
+        this.shapes.heart.draw(context, program_state, heart_transform, this.materials.heart);
+    }
+
     spawn_objects(t, context, program_state, model_transform) {
         // asteroid belt there and back
         if ((t >= 10 && t <= 20) || (t >= 110 && t <= 120)) {
             this.asteroid_belt(t, context, program_state, model_transform)
         }
-
     }
 
     make_control_panel() {
@@ -89,6 +99,6 @@ export class Space extends Scene {
         program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 10**3)];
 
         let model_transform = Mat4.identity();
-        this.spawn_objects(t, context, program_state, model_transform)
+        this.spawn_objects(t, context, program_state, model_transform);
     }
 }

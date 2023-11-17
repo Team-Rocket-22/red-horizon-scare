@@ -1,6 +1,6 @@
 import {defs, tiny} from './examples/common.js';
 import {Asteroid} from './asteroid.js';
-import {Heart} from './shapes/heart.js'
+import {Heart} from './shapes/heart.js';
 
 const {
     Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Material, Scene,
@@ -15,7 +15,11 @@ export class Space extends Scene {
             asteroid: new Asteroid(),
             // asteroid: new defs.Subdivision_Sphere(4)
             heart: new Heart(),
-            satellite: new defs.Cylindrical_Tube(20, 20),
+            satellite: new defs.Capped_Cylinder(20, 20),
+            solar_panel1: new defs.Cube(),
+            solar_panel2: new defs.Cube(),
+            satellite_head: new defs.Cone_Tip(20, 20),
+            satellite_tail: new defs.Subdivision_Sphere(8),
         };
 
         // *** Materials
@@ -26,6 +30,14 @@ export class Space extends Scene {
                 {ambient: 0.8, diffusivity: 0.5, specularity: 0.2, color: hex_color("#880808")}),
             satellite: new Material(new defs.Phong_Shader(),
                 {ambient: 0.8, diffusivity: 0.5, specularity: 0.2, color: hex_color("#F5F5DC")}),
+            solar_panel1: new Material(new defs.Phong_Shader(),
+                {ambient: 0.8, diffusivity: 0.5, specularity: 0.2, color: hex_color("#0047ab")}),
+            solar_panel2: new Material(new defs.Phong_Shader(),
+                {ambient: 0.8, diffusivity: 0.5, specularity: 0.2, color: hex_color("#0047ab")}),
+            satellite_head: new Material(new defs.Phong_Shader(),
+                {ambient: 0.8, diffusivity: 0.5, specularity: 0.2, color: hex_color("#4b4e52")}),
+            satellite_tail: new Material(new defs.Phong_Shader(),
+                {ambient: 0.8, diffusivity: 0.5, specularity: 0.2, color: hex_color("#FFFFFF")}),
         }
 
         this.background_colors = [hex_color("#000000"), hex_color("#000435"), hex_color("#36013f")]
@@ -72,11 +84,24 @@ export class Space extends Scene {
         this.shapes.heart.draw(context, program_state, heart_transform, this.materials.heart);
     }
 
-    // TODO: add power (solar panels) onto satellite, add texture to panels
+    // TODO: add texture to satellite
     spawn_satellite(t, context, program_state, model_transform) {
         let satellite_transform = model_transform;
-        satellite_transform = satellite_transform.times(Mat4.translation(0, 0, 0)).times(Mat4.rotation(Math.PI / 2, 1, 0, 0)).times(Mat4.scale(1, 1, 4));
+        satellite_transform = satellite_transform.times(Mat4.translation(0, 0, 0)).times(Mat4.rotation(Math.PI / 2, 1, 0, 0)).times(Mat4.scale(.5, .5, 2));
         this.shapes.satellite.draw(context, program_state, satellite_transform, this.materials.satellite);
+
+        let solar1_transform = satellite_transform;
+        let solar2_transform = satellite_transform;
+        let head_transform = satellite_transform;
+        let tail_transform = satellite_transform;
+        solar1_transform = solar1_transform.times(Mat4.scale(1.5, 1, 1/32)).times(Mat4.translation(1.5, 0, 0));
+        solar2_transform = solar2_transform.times(Mat4.scale(1.5, 1, 1/32)).times(Mat4.translation(-1.5, 0, 0));
+        head_transform = head_transform.times(Mat4.scale(1.75, 1.75, 1/10)).times(Mat4.translation(0, 0, -5.5));
+        tail_transform = tail_transform.times(Mat4.scale(1, 1, 1/4)).times(Mat4.translation(0, 0, 1.75));
+        this.shapes.solar_panel1.draw(context, program_state, solar1_transform, this.materials.solar_panel1);
+        this.shapes.solar_panel2.draw(context, program_state, solar2_transform, this.materials.solar_panel2);
+        this.shapes.satellite_head.draw(context, program_state, head_transform, this.materials.satellite_head);
+        this.shapes.satellite_tail.draw(context, program_state, tail_transform, this.materials.satellite_tail);
     }
 
     spawn_objects(t, context, program_state, model_transform) {

@@ -1,5 +1,10 @@
 import {defs, tiny} from './examples/common.js';
+<<<<<<< Updated upstream
 import {Asteroid} from './asteroid.js';
+=======
+import {Asteroid} from './shapes/asteroid.js';
+import {Heart} from './shapes/heart.js'
+>>>>>>> Stashed changes
 
 const {
     Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Material, Scene,
@@ -13,6 +18,7 @@ export class Space extends Scene {
         this.shapes = {
             asteroid: new Asteroid(),
             // asteroid: new defs.Subdivision_Sphere(4)
+<<<<<<< Updated upstream
             heart_part: new defs.Cube(),
             face: new defs.Capped_Cylinder(20, 20),
             smile: new defs.Closed_Cone(20, 20),
@@ -21,6 +27,11 @@ export class Space extends Scene {
             solar_panel2: new defs.Cube(),
             satellite_head: new defs.Cone_Tip(20, 20),
             satellite_tail: new defs.Subdivision_Sphere(8),
+=======
+            heart: new Heart(),
+            satellite: new defs.Cylindrical_Tube(20, 20),
+            black_hole: new defs.Capped_Cylinder(20, 20)
+>>>>>>> Stashed changes
         };
 
         // *** Materials
@@ -33,6 +44,7 @@ export class Space extends Scene {
                 {ambient: 0.8, diffusivity: 0.5, specularity: 0.2, color: hex_color("#000000")}),
             satellite: new Material(new defs.Phong_Shader(),
                 {ambient: 0.8, diffusivity: 0.5, specularity: 0.2, color: hex_color("#F5F5DC")}),
+<<<<<<< Updated upstream
             solar_panel1: new Material(new defs.Phong_Shader(),
                 {ambient: 0.8, diffusivity: 0.5, specularity: 0.2, color: hex_color("#0047ab")}),
             solar_panel2: new Material(new defs.Phong_Shader(),
@@ -41,6 +53,10 @@ export class Space extends Scene {
                 {ambient: 0.8, diffusivity: 0.5, specularity: 0.2, color: hex_color("#4b4e52")}),
             satellite_tail: new Material(new defs.Phong_Shader(),
                 {ambient: 0.8, diffusivity: 0.5, specularity: 0.2, color: hex_color("#FFFFFF")}),
+=======
+            black_hole: new Material(new defs.Phong_Shader(),
+                {ambient: 0.8, diffusivity: 0.5, specularity: 0.2, color: hex_color("#ffffff")}),
+>>>>>>> Stashed changes
         }
 
         this.background_colors = [hex_color("#000000"), hex_color("#000435"), hex_color("#36013f")]
@@ -159,9 +175,12 @@ export class Space extends Scene {
             Math.PI / 4, context.width / context.height, .1, 1000);
 
         const light_position = vec4(0, 0, 0, 1);
-        program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 10**3)];
+        // program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 10**3)];
 
         let model_transform = Mat4.identity();
         this.spawn_objects(t, context, program_state, model_transform);
+
+        let black_hole_transform = model_transform
+        black_hole_transform = black_hole_transform.times(Mat4.scale(4, 1, 0.25)).times(Mat4.translation(3, 0, 0))
     }
 }

@@ -1,6 +1,5 @@
 import {defs, tiny} from './examples/common.js';
 import {Asteroid} from './asteroid.js';
-import {Heart} from './shapes/heart.js';
 
 const {
     Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Material, Scene,
@@ -14,7 +13,9 @@ export class Space extends Scene {
         this.shapes = {
             asteroid: new Asteroid(),
             // asteroid: new defs.Subdivision_Sphere(4)
-            heart: new Heart(),
+            heart_part: new defs.Cube(),
+            face: new defs.Capped_Cylinder(20, 20),
+            smile: new defs.Closed_Cone(20, 20),
             satellite: new defs.Capped_Cylinder(20, 20),
             solar_panel1: new defs.Cube(),
             solar_panel2: new defs.Cube(),
@@ -28,6 +29,8 @@ export class Space extends Scene {
                 {ambient: 0.8, diffusivity: 0.5, specularity: 0.2, color: hex_color("#4b4e52")}),
             heart: new Material(new defs.Phong_Shader(),
                 {ambient: 0.8, diffusivity: 0.5, specularity: 0.2, color: hex_color("#880808")}),
+            face: new Material(new defs.Phong_Shader(),
+                {ambient: 0.8, diffusivity: 0.5, specularity: 0.2, color: hex_color("#000000")}),
             satellite: new Material(new defs.Phong_Shader(),
                 {ambient: 0.8, diffusivity: 0.5, specularity: 0.2, color: hex_color("#F5F5DC")}),
             solar_panel1: new Material(new defs.Phong_Shader(),
@@ -76,12 +79,37 @@ export class Space extends Scene {
             this.shapes.asteroid.draw(context, program_state, asteroids[i], this.materials.asteroid)
         }
     }
-
-    // TODO: fill in heart shape and transform to 3D
     spawn_heart(t, context, program_state, model_transform) {
+
         let heart_transform = model_transform;
-        heart_transform = heart_transform.times(Mat4.scale(1/14, 1/14, 1/14));
-        this.shapes.heart.draw(context, program_state, heart_transform, this.materials.heart);
+        heart_transform = heart_transform.times(Mat4.scale(7 / 4, 2 / 4, 1 / 4));
+        this.shapes.heart_part.draw(context, program_state, heart_transform, this.materials.heart);
+
+        let eye1_transform = heart_transform.times(Mat4.scale(1/7, 1/ 2, 1));
+        eye1_transform = eye1_transform.times(Mat4.scale(1, 2.5, 0.8)).times(Mat4.rotation(Math.PI / 2, 1, 0, 0)).times(Mat4.translation(-2, 1, 0.25));
+        this.shapes.face.draw(context, program_state, eye1_transform, this.materials.face);
+
+        let eye2_transform = eye1_transform.times(Mat4.translation(4, 0, 0));
+        this.shapes.face.draw(context, program_state, eye2_transform, this.materials.face);
+
+        let smile_transform = eye1_transform.times(Mat4.scale(2, 1, 1 / 6)).times(Mat4.translation(1, 0, 6));
+        this.shapes.smile.draw(context, program_state, smile_transform, this.materials.face);
+
+        let heart_transform2 = heart_transform.times(Mat4.scale(1/7, 1/2, 1));
+        heart_transform2 = heart_transform2.times(Mat4.scale(2, 4, 1)).times(Mat4.translation(-1.5, 0, 0));
+        this.shapes.heart_part.draw(context, program_state, heart_transform2, this.materials.heart);
+
+        let heart_transform3 = heart_transform2;
+        heart_transform3 = heart_transform3.times(Mat4.translation(3, 0, 0));
+        this.shapes.heart_part.draw(context, program_state, heart_transform3, this.materials.heart);
+
+        let heart_transform4 = heart_transform.times(Mat4.scale(1/7, 1/2, 1));
+        heart_transform4 = heart_transform4.times(Mat4.scale(3, 2, 1)).times(Mat4.translation(0, -2, 0));
+        this.shapes.heart_part.draw(context, program_state, heart_transform4, this.materials.heart);
+
+        let heart_transform5 = heart_transform.times(Mat4.scale(1/7, 1/2, 1));
+        heart_transform5 = heart_transform5.times(Mat4.translation(0, -7, 0));
+        this.shapes.heart_part.draw(context, program_state, heart_transform5, this.materials.heart);
     }
 
     // TODO: add texture to satellite

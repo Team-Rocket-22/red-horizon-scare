@@ -207,7 +207,7 @@ export class Space extends Scene {
     }
 
     spawn_speed_up(t, context, program_state, model_transform) {
-        if (t <= 12) {
+        if (t <= 18) {
             model_transform = Mat4.identity().times(Mat4.translation(0, -3 * t, 0)).times(model_transform);
             this.shapes.speed_up.draw(context, program_state, model_transform, this.materials.speed_up);
             model_transform = Mat4.identity().times(Mat4.translation(0, -1, 0)).times(model_transform);
@@ -220,7 +220,7 @@ export class Space extends Scene {
 
     // TODO: add texture to shield bubble
     spawn_shield(t, context, program_state, model_transform) {
-        if (t >= 3 && t <= 12) {
+        if (t >= 3 && t <= 16) {
             model_transform = Mat4.identity().times(Mat4.translation(0, -5 * (t - 3), 0)).times(model_transform);
             this.shapes.shield.draw(context, program_state, model_transform, this.materials.shield);
         }
@@ -231,7 +231,7 @@ export class Space extends Scene {
         if (t >= 0 && t <= 2) {
             this.shapes.earth.draw(context, program_state, model_transform, this.materials.earth);
         }
-        else if (t > 2 && t <= 10) {
+        else if (t > 2 && t <= 16) {
             model_transform = model_transform.times(Mat4.translation(0, -0.2 * (t - 2), 0));
             this.shapes.earth.draw(context, program_state, model_transform, this.materials.earth);
         }
@@ -239,67 +239,28 @@ export class Space extends Scene {
     }
 
     arrive_earth(t, context, program_state, model_transform) {
-        if (t > 35 && t <= 42) {
-            model_transform = model_transform.times(Mat4.translation(0, 0.2 * (t - 35), 0));
+        if (t > 38 && t <= 52) {
+            model_transform = model_transform.times(Mat4.translation(0, 0.2 * (t - 38), 0));
             this.shapes.earth.draw(context, program_state, model_transform, this.materials.earth);
         }
-        else if (t > 42) {
-            model_transform = model_transform.times(Mat4.translation(0, 1.4, 0));
-            this.shapes.earth.draw(context, program_state, model_transform, this.materials.earth);
-        }
-        return model_transform
-    }
-
-    spawn_mars(t, context, program_state, model_transform) {
-        if (t >= 20 && t <= 24) {
-            model_transform = model_transform.times(Mat4.translation(0, -0.2 * (t - 20), 0));
-            this.shapes.mars.draw(context, program_state, model_transform, this.materials.mars);
-        }
-        else if (t > 24 && t <= 30) {
-            model_transform = model_transform.times(Mat4.translation(0, -0.8, 0));
-            this.shapes.mars.draw(context, program_state, model_transform, this.materials.mars);
-        }
-        else if (t > 30 && t <= 35) {
-            model_transform = model_transform.times(Mat4.translation(0, 0.2 * (t - 30), 0)).times(Mat4.translation(0, -0.8, 0));
-            this.shapes.mars.draw(context, program_state, model_transform, this.materials.mars);
-        }
-        return model_transform
-    }
-
-    leave_earth(t, context, program_state, model_transform) {
-        if (t >= 0 && t <= 2) {
-            this.shapes.earth.draw(context, program_state, model_transform, this.materials.earth);
-        }
-        else if (t > 2 && t <= 10) {
-            model_transform = model_transform.times(Mat4.translation(0, -0.2 * (t - 2), 0));
-            this.shapes.earth.draw(context, program_state, model_transform, this.materials.earth);
-        }
-        return model_transform
-    }
-
-    arrive_earth(t, context, program_state, model_transform) {
-        if (t > 35 && t <= 42) {
-            model_transform = model_transform.times(Mat4.translation(0, 0.2 * (t - 35), 0));
-            this.shapes.earth.draw(context, program_state, model_transform, this.materials.earth);
-        }
-        else if (t > 42) {
-            model_transform = model_transform.times(Mat4.translation(0, 1.4, 0));
+        else if (t > 52) {
+            model_transform = model_transform.times(Mat4.translation(0, 2.8, 0));
             this.shapes.earth.draw(context, program_state, model_transform, this.materials.earth);
         }
         return model_transform
     }
 
     spawn_mars(t, context, program_state, model_transform) {
-        if (t >= 20 && t <= 24) {
-            model_transform = model_transform.times(Mat4.translation(0, -0.2 * (t - 20), 0));
+        if (t >= 18 && t <= 24) {
+            model_transform = model_transform.times(Mat4.translation(0, -0.2 * (t - 18), 0));
             this.shapes.mars.draw(context, program_state, model_transform, this.materials.mars);
         }
         else if (t > 24 && t <= 30) {
-            model_transform = model_transform.times(Mat4.translation(0, -0.8, 0));
+            model_transform = model_transform.times(Mat4.translation(0, -1.2, 0));
             this.shapes.mars.draw(context, program_state, model_transform, this.materials.mars);
         }
-        else if (t > 30 && t <= 35) {
-            model_transform = model_transform.times(Mat4.translation(0, 0.2 * (t - 30), 0)).times(Mat4.translation(0, -0.8, 0));
+        else if (t > 30 && t <= 40) {
+            model_transform = model_transform.times(Mat4.translation(0, 0.2 * (t - 30), 0)).times(Mat4.translation(0, -1.2, 0));
             this.shapes.mars.draw(context, program_state, model_transform, this.materials.mars);
         }
         return model_transform
@@ -411,10 +372,10 @@ export class Space extends Scene {
         let model_transform_e_leave = Mat4.identity().times(Mat4.translation(0, -30, -15)).times(Mat4.scale(20, 20, 20));
         model_transform_e_leave = this.leave_earth(t, context, program_state, model_transform_e_leave);
 
-        let model_transform_m= Mat4.identity().times(Mat4.translation(0, 30, -30)).times(Mat4.scale(20, 20, 20));
+        let model_transform_m= Mat4.identity().times(Mat4.translation(0, 40, -30)).times(Mat4.scale(20, 20, 20));
         model_transform_m = this.spawn_mars(t, context, program_state, model_transform_m);
 
-        let model_transform_e_arrive = Mat4.identity().times(Mat4.translation(0, -65, -15)).times(Mat4.scale(20, 20, 20));
+        let model_transform_e_arrive = Mat4.identity().times(Mat4.translation(0, -80, -15)).times(Mat4.scale(20, 20, 20));
         model_transform_e_arrive = this.arrive_earth(t, context, program_state, model_transform_e_arrive);
     }
 }

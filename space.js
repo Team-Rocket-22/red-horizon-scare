@@ -31,6 +31,7 @@ export class Space extends Scene {
             rocket_body: new defs.Capped_Cylinder(20,20),
             rocket_head: new defs.Closed_Cone(20, 20),
             rocket_fin: new defs.Triangle(),
+            rocket_hitbox: new defs.Cube(),
         };
 
         // *** Materials
@@ -65,9 +66,11 @@ export class Space extends Scene {
                 {ambient: 0.5, diffusivity: 0.8, specularity: 0.5, color: hex_color("#a43f2f")}),
             // rocket material colors don't matter because they will be overridden in display()
             rocket_body: new Material(new defs.Phong_Shader(),
-                {ambient: 0.8, diffusivity: 0.5, specularity: 0.2, color: hex_color("#000000")}),
+                {ambient: 0.8, diffusivity: 0.5, specularity: 0, color: hex_color("#000000")}),
             rocket_extras: new Material(new defs.Phong_Shader(),
-                {ambient: 0.8, diffusivity: 0.5, specularity: 0.2, color: hex_color("#000000")}),
+                {ambient: 0.8, diffusivity: 0.7, specularity: 0.4, color: hex_color("#000000")}),
+            rocket_hitbox: new Material(new defs.Invisible_Shader(),
+                {ambient: 0.8, diffusivity: 0.7, specularity: 0.5, color: hex_color("#850e05")}),
         }
 
         this.background_colors = [hex_color("#000000"), hex_color("#000435"), hex_color("#36013f")]
@@ -155,6 +158,7 @@ export class Space extends Scene {
         let rocket_body_transform = model_transform
         let rocket_head_transform = model_transform
         let rocket_fin_transform = model_transform
+        let rocket_hitbox_transform = model_transform
 
         rocket_body_transform = rocket_body_transform.times(Mat4.rotation(Math.PI / 2, 1, 0, 0))
                                     .times(Mat4.scale(1, 1, 3))
@@ -174,6 +178,10 @@ export class Space extends Scene {
             this.shapes.rocket_fin.draw(context, program_state, rocket_fin_transform,
                 this.materials.rocket_extras.override({color:this.rocket_extras_colors[this.current_rocket]}))
         }
+
+        rocket_hitbox_transform = rocket_hitbox_transform.times(Mat4.scale(1.15, 2.25, 1.15)).times(Mat4.translation(0, 0.15, 0))
+        this.shapes.rocket_hitbox.draw(context, program_state, rocket_hitbox_transform,
+             this.materials.rocket_hitbox)
 
     }
 

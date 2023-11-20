@@ -112,6 +112,10 @@ export class Space extends Scene {
         for (let i = 0; i < 10; i++) {
             this.asteroid_positions.push(Math.floor(Math.random() * (31) - 15 ))
         }
+        this.asteroid_angles = []
+        for (let i = 0; i < 10; i++) {
+            this.asteroid_angles.push(Math.random() * 2)
+        }
         this.alien_positions = []
         for (let i = 0; i < 7; i++) {
             this.alien_positions.push(Math.floor(Math.random() * (60) - 30 ))
@@ -124,6 +128,7 @@ export class Space extends Scene {
         for (let i = 0; i < 12; i++) {
             this.satellite_positions_right.push(Math.floor(Math.random() * (80) - 0 ))
         }
+        console.log(this.asteroid_angles)
         // TODO: what rocket colors do we want
         this.rocket_colors = [hex_color("#850e05"), hex_color("#61abff"), hex_color("#4e4e54"), hex_color("#023b02")]
         this.rocket_extras_colors = [hex_color("#2ebdff"), hex_color("#ea94d5"), hex_color("#ff1b1b"), hex_color("#7c61ff")]
@@ -161,7 +166,7 @@ export class Space extends Scene {
         let asteroids = []
         for (let i = 0; i < this.asteroid_positions.length; i++) {
             asteroids[i] = model_transform
-            asteroids[i] = asteroids[i].times(Mat4.translation(this.asteroid_positions[i], 30 + (i * 5), 0)).times(Mat4.scale(1, 1.5, 1)).times(Mat4.translation(0, -(t % 10) * 7, 0))
+            asteroids[i] = asteroids[i].times(Mat4.rotation(this.asteroid_angles[i] * Math.PI, 0, 1, 0)).times(Mat4.translation(this.asteroid_positions[i], 30 + (i * 5), 0)).times(Mat4.scale(1, 1.5, 1)).times(Mat4.translation(0, -(t % 10) * 7, 0))
             this.shapes.asteroid.draw(context, program_state, asteroids[i], this.materials.asteroid)
         }
     }

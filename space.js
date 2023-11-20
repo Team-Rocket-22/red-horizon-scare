@@ -4,12 +4,14 @@ import {Asteroid} from './shapes/asteroid.js';
 const {
     Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Material, Scene, Texture
 } = tiny;
+const PLAYER_SPEED = 0.1;
 
 export class Space extends Scene {
     constructor() {
         // constructor(): Scenes begin by populating initial values like the Shapes and Materials they'll need.
         super();
         // At the beginning of our program, load one of each of these shape definitions onto the GPU.
+
         this.shapes = {
             // asteroid: new Asteroid(),
             asteroid: new defs.Subdivision_Sphere(5),
@@ -22,6 +24,9 @@ export class Space extends Scene {
             solar_panel2: new defs.Cube(),
             satellite_head: new defs.Cone_Tip(20, 20),
             satellite_tail: new defs.Subdivision_Sphere(8),
+            rocket_body: new defs.Capped_Cylinder(20,20),
+            rocket_head: new defs.Closed_Cone(20, 20),
+            rocket_fin: new defs.Triangle(),
         };
 
         // *** Materials
@@ -50,6 +55,11 @@ export class Space extends Scene {
                 {ambient: 0.8, diffusivity: 0.5, specularity: 0.2, color: hex_color("#FFFFFF")}),
             black_hole: new Material(new defs.Phong_Shader(),
                 {ambient: 0.8, diffusivity: 0.5, specularity: 0.2, color: hex_color("#ffffff")}),
+            // rocket material colors don't matter because they will be overridden in display()
+            rocket_body: new Material(new defs.Phong_Shader(),
+                {ambient: 0.8, diffusivity: 0.5, specularity: 0.2, color: hex_color("#000000")}),
+            rocket_extras: new Material(new defs.Phong_Shader(),
+                {ambient: 0.8, diffusivity: 0.5, specularity: 0.2, color: hex_color("#000000")}),
         }
 
         this.background_colors = [hex_color("#000000"), hex_color("#000435"), hex_color("#36013f")]
@@ -59,18 +69,28 @@ export class Space extends Scene {
             this.asteroid_positions.push(Math.floor(Math.random() * (31) - 15 ))
         }
         // TODO: what rocket colors do we want
-        this.rocket_colors = [hex_color("#850e05"), hex_color("#050bb3"), hex_color("#4e4e54"), hex_color("#023b02")]
-        this.current_rocket = 0
+        this.rocket_colors = [hex_color("#850e05"), hex_color("#61abff"), hex_color("#4e4e54"), hex_color("#023b02")]
+        this.rocket_extras_colors = [hex_color("#2ebdff"), hex_color("#ea94d5"), hex_color("#ff1b1b"), hex_color("#7c61ff")]
+        this.current_rocket = 2
         this.initial_camera_location = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
 
         this.hp = 3
+        
+        // user-controlled rocket movement for next frame in North, South, East, and West
+        this.rocket_motion = {
+            'N': false,
+            'S': false,
+            'E': false,
+            'W': false,
+        }
+        this.rocket_transform = Mat4.identity();
     }
 
     change_background() {
         this.current_background = (this.current_background + 1) % (this.background_colors.length)
     }
 
-    change_rocket() {
+    change_rocket_color() {
         this.current_rocket = (this.current_rocket + 1) % (this.rocket_colors.length)
     }
 
@@ -121,6 +141,33 @@ export class Space extends Scene {
         this.shapes.heart_part.draw(context, program_state, heart_transform5, this.materials.heart);
     }
 
+    spawn_rocket(t, context, program_state, model_transform){
+        // Just placeholder to make rocket object
+        let rocket_body_transform = model_transform
+        let rocket_head_transform = model_transform
+        let rocket_fin_transform = model_transform
+
+        rocket_body_transform = rocket_body_transform.times(Mat4.rotation(Math.PI / 2, 1, 0, 0))
+                                    .times(Mat4.scale(1, 1, 3))
+        this.shapes.rocket_body.draw(context, program_state, rocket_body_transform, 
+            this.materials.rocket_body.override({color:this.rocket_colors[this.current_rocket]}))
+
+        rocket_head_transform = rocket_head_transform.times(Mat4.translation(0, 2, 0))
+                                    .times(Mat4.rotation(-Math.PI / 2, 1, 0, 0))
+                                    .times(Mat4.scale(1.25, 1.25, 0.7))
+        this.shapes.rocket_head.draw(context, program_state, rocket_head_transform,
+            this.materials.rocket_extras.override({color:this.rocket_extras_colors[this.current_rocket]}))
+        
+        for(let i = 1; i < 8; i += 2){
+            rocket_fin_transform = model_transform.times(Mat4.rotation(i * (Math.PI / 4), 0, 1, 0))
+                                    .times(Mat4.translation(0.8, -2, 0))
+                                    .times(Mat4.scale(0.8, 1.8, 1))
+            this.shapes.rocket_fin.draw(context, program_state, rocket_fin_transform,
+                this.materials.rocket_extras.override({color:this.rocket_extras_colors[this.current_rocket]}))
+        }
+
+    }
+
     // TODO: add texture to satellite
     spawn_satellite(t, context, program_state, model_transform) {
         let satellite_transform = model_transform;
@@ -148,10 +195,48 @@ export class Space extends Scene {
         }
     }
 
+    move_rocket(){
+        // takes sum of all movements affecting rocket and moves accordingly
+        let vertical = 0
+        let horizontal = 0
+
+        if(this.rocket_motion['N']){
+            vertical += PLAYER_SPEED
+        }
+        if(this.rocket_motion['S']){
+            vertical -= PLAYER_SPEED
+        }
+        if(this.rocket_motion['E']){
+            horizontal += PLAYER_SPEED
+        }
+        if(this.rocket_motion['W']){
+            horizontal -= PLAYER_SPEED
+        }
+        // ADD CHECKS FOR BLACK HOLE LATER
+
+        this.rocket_transform = this.rocket_transform.times(Mat4.translation(horizontal, vertical, 0))
+    }
+
     make_control_panel() {
         // Draw the scene's buttons, setup their actions and keyboard shortcuts, and monitor live measurements.
         this.key_triggered_button("Change background color", ["b"], this.change_background);
-        this.key_triggered_button("Change rocket color", ["c"], this.change_rocket);
+        this.key_triggered_button("Change rocket color", ["c"], this.change_rocket_color);
+        this.key_triggered_button("Move rocket up", ["i"], 
+                                    function() { this.rocket_motion['N'] = true},
+                                    '#6E6460',
+                                    function() { this.rocket_motion['N'] = false});
+        this.key_triggered_button("Move rocket down", ["k"], 
+                                    function() { this.rocket_motion['S'] = true},
+                                    '#6E6460',
+                                    function() { this.rocket_motion['S'] = false});
+        this.key_triggered_button("Move rocket left", ["j"], 
+                                    function() { this.rocket_motion['W'] = true},
+                                    '#6E6460',
+                                    function() { this.rocket_motion['W'] = false});
+        this.key_triggered_button("Move rocket right", ["l"],
+                                    function() { this.rocket_motion['E'] = true},
+                                    '#6E6460',
+                                    function() { this.rocket_motion['E'] = false});
     }
 
     display(context, program_state) {
@@ -170,9 +255,11 @@ export class Space extends Scene {
         const light_position = vec4(5, -2, 0, 1);
         program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 10**10)];
 
-        let model_transform = Mat4.identity();
-        this.spawn_objects(t, context, program_state, model_transform);
+        let model_transform = Mat4.identity()
+        this.spawn_objects(t, context, program_state, model_transform)
+        this.spawn_rocket(t, context, program_state, this.rocket_transform)
 
+        this.move_rocket()
         // this.shapes.asteroid.draw(context, program_state, model_transform.times(Mat4.translation(-5, 0, 0)).times(Mat4.scale(3, 4.5, 3)).times(Mat4.rotation(Math.PI * (t*0.1), 0, 1, 0)), this.materials.asteroid)
         // this.shapes.asteroid.draw(context, program_state, model_transform.times(Mat4.translation(5, 0, 0)).times(Mat4.scale(3, 4.5, 3)).times(Mat4.rotation(Math.PI * (t*0.1), 0, 1, 0)), this.materials.asteroid_flat)
         // this.shapes.asteroid.draw(context, program_state, model_transform.times(Mat4.translation(-5, 0, 0)).times(Mat4.scale(3, 4.5, 3)).times(Mat4.rotation(Math.PI * (t*0.1), 0, 1, 0)), this.materials.asteroid)

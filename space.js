@@ -1,12 +1,17 @@
-import {defs, tiny} from './examples/common.js';
-import {Asteroid} from './shapes/asteroid.js';
-import { BlackHole } from './shapes/black_hole.js';
+import {defs, tiny} from './examples/common.js'
+import {Asteroid} from './shapes/asteroid.js'
+import { BlackHole } from './shapes/black_hole.js'
 import {shaders} from './shaders.js'
+import { Text_Demo, Text_Line } from './examples/text-demo.js'
 
 const {
     Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Material, Scene, Texture
 } = tiny;
 const PLAYER_SPEED = 0.1;
+const CAMERA = {
+    INIT_Z: 10,
+    END_Z: 50,
+}
 
 export class Space extends Scene {
     constructor() {
@@ -34,6 +39,17 @@ export class Space extends Scene {
             rocket_head: new defs.Closed_Cone(20, 20),
             rocket_fin: new defs.Triangle(),
             rocket_hitbox: new defs.Cube(),
+
+            text_test: new Text_Line(20),
+            alien_ship_body: new defs.Subdivision_Sphere(4),
+            alien_ship_head: new defs.Subdivision_Sphere(4),
+            alien_ship_guns: new defs.Capped_Cylinder(20,20),
+            laser: new defs.Capped_Cylinder(20,20),
+
+
+            
+            
+
         };
 
         // *** Materials
@@ -73,6 +89,21 @@ export class Space extends Scene {
                 {ambient: 0.8, diffusivity: 0.7, specularity: 0.4, color: hex_color("#000000")}),
             rocket_hitbox: new Material(new defs.Invisible_Shader(),
                 {ambient: 0.8, diffusivity: 0.7, specularity: 0.5, color: hex_color("#850e05")}),
+
+            text_test: new Material(new defs.Textured_Phong(1), {
+                ambient: 1, diffusivity: 0, specularity: 0,
+                texture: new Texture("assets/text.png")}),
+
+            alien_ship_body: new Material(new defs.Phong_Shader(),
+                {ambient: 0.8, diffusivity: 0.5, specularity: 0, color: hex_color("#4895EF")}),
+            alien_ship_head: new Material(new defs.Phong_Shader(),
+                {ambient: 0.8, diffusivity: 0.5, specularity: 0, color: hex_color("#A8CCD7")}),
+            alien_ship_guns: new Material(new defs.Phong_Shader(),
+                {ambient: 0.8, diffusivity: 0.5, specularity: 0, color: hex_color("#F17961")}),
+
+            laser: new Material(new defs.Phong_Shader(), {
+                ambient: 0.8, diffusivity: 0.5, specularity: 1, color: hex_color("#FF0000")}),
+
         }
 
         this.background_colors = [hex_color("#000000"), hex_color("#000435"), hex_color("#36013f")]
@@ -81,11 +112,23 @@ export class Space extends Scene {
         for (let i = 0; i < 10; i++) {
             this.asteroid_positions.push(Math.floor(Math.random() * (31) - 15 ))
         }
+        this.alien_positions = []
+        for (let i = 0; i < 7; i++) {
+            this.alien_positions.push(Math.floor(Math.random() * (60) - 30 ))
+        }
+        this.satellite_positions_left = []
+        for (let i = 0; i < 12; i++) {
+            this.satellite_positions_left.push(Math.floor(Math.random() * (80) - 80 ))
+        }
+        this.satellite_positions_right = []
+        for (let i = 0; i < 12; i++) {
+            this.satellite_positions_right.push(Math.floor(Math.random() * (80) - 0 ))
+        }
         // TODO: what rocket colors do we want
         this.rocket_colors = [hex_color("#850e05"), hex_color("#61abff"), hex_color("#4e4e54"), hex_color("#023b02")]
         this.rocket_extras_colors = [hex_color("#2ebdff"), hex_color("#ea94d5"), hex_color("#ff1b1b"), hex_color("#7c61ff")]
         this.current_rocket = 2
-        this.initial_camera_location = Mat4.look_at(vec3(0, 10, 20), vec3(0, 0, 0), vec3(0, 1, 0));
+        this.initial_camera_location = Mat4.look_at(vec3(0, 10, CAMERA.END_Z), vec3(0, 0, 0), vec3(0, 1, 0));
 
         this.hp = 3
         
@@ -98,6 +141,7 @@ export class Space extends Scene {
         }
         this.rocket_transform = Mat4.identity();
     }
+
 
     change_background() {
         this.current_background = (this.current_background + 1) % (this.background_colors.length)
@@ -119,6 +163,34 @@ export class Space extends Scene {
             asteroids[i] = model_transform
             asteroids[i] = asteroids[i].times(Mat4.translation(this.asteroid_positions[i], 30 + (i * 5), 0)).times(Mat4.scale(1, 1.5, 1)).times(Mat4.translation(0, -(t % 10) * 7, 0))
             this.shapes.asteroid.draw(context, program_state, asteroids[i], this.materials.asteroid)
+        }
+    }
+
+    alien_attack(t, context, program_state, model_transform) {
+        
+        let aliens = []
+        for (let i = 0; i < this.alien_positions.length; i++) {
+            aliens[i] = model_transform
+            aliens[i] = aliens[i].times(Mat4.translation(this.alien_positions[i], 30 + (i * 5), 0)).times(Mat4.scale(1, 1.5, 1)).times(Mat4.translation(0, -(t % 10) * 7, 0))
+            this.spawn_alienship(t, context, program_state, aliens[i])
+        }
+    }
+
+    satellite_hit_right(t, context, program_state, model_transform) {
+        let satellites_right = []
+        for (let i = 0; i < this.satellite_positions_right.length; i++) {
+            satellites_right[i] = model_transform
+            satellites_right[i] = satellites_right[i].times(Mat4.translation(this.satellite_positions_right[i], 30 + (i * 5), 0)).times(Mat4.scale(1, 1.5, 1)).times(Mat4.translation(0, -(t % 10) * 7, 0))
+            this.spawn_satellite_right(t, context, program_state, satellites_right[i])
+        }
+    }
+
+    satellite_hit_left(t, context, program_state, model_transform) {
+        let satellites_left = []
+        for (let i = 0; i < this.satellite_positions_left.length; i++) {
+            satellites_left[i] = model_transform
+            satellites_left[i] = satellites_left[i].times(Mat4.translation(this.satellite_positions_left[i], 30 + (i * 5), 0)).times(Mat4.scale(1, 1.5, 1)).times(Mat4.translation(0, -(t % 10) * 7, 0))
+            this.spawn_satellite_left(t, context, program_state, satellites_left[i])
         }
     }
 
@@ -186,10 +258,92 @@ export class Space extends Scene {
 
     }
 
+    shoot_laser(t, context, program_state, model_transform) {
+        const downward_speed = 9;
+            
+        const animate_laser = () => {
+            let elapsed_time = t - 20;
+            const downward_distance = downward_speed * elapsed_time
+            model_transform = model_transform.times(Mat4.translation( 0, -downward_distance, 0))
+            const laser_transform = model_transform
+                .times(Mat4.translation(0, 0, 0))
+                .times(Mat4.scale(.6, .6, .6))
+            this.shapes.laser.draw(context, program_state, laser_transform, this.materials.laser);
+
+        }
+
+        animate_laser(t)
+    }
+
+    spawn_alienship(t, context, program_state, model_transform) {
+
+        const downward_speed = 12;
+
+        const animate_ship = () => {
+            // Calculate time elapsed since the ship was spawned
+            // const elapsed_time = t - spawn;
+            // let elapsed_time = t + spawn_time - spawn_time;
+            const downward_distance = downward_speed * (t - 25)
+            model_transform = model_transform.times(Mat4.translation( 0, -downward_distance, 0))
+
+            const alien_ship_transform = model_transform
+            .times(Mat4.scale(5/3, 5/3, 1/3))
+    
+            // Draw the disk body of the alien ship
+            this.shapes.alien_ship_body.draw(context, program_state, alien_ship_transform, this.materials.alien_ship_body);
+    
+            // Position and draw the half-sphere head of the alien ship
+            const head_transform = alien_ship_transform
+                .times(Mat4.translation(0, 0, -.2 * 1/3)) 
+                .times(Mat4.scale(1/5 * 2 , 1/5 * 2 , 2 * 1.2 ))
+            this.shapes.alien_ship_head.draw(context, program_state, head_transform, this.materials.alien_ship_head);
+    
+            const gun_transform_left = model_transform
+                .times(Mat4.translation(4.5 * 1/3, -1.5 * 1/3, 0))
+                .times(Mat4.scale(.4 * 1/3, 4.5 * 1/3, .4 *1/3))
+            const gun_transform_right = model_transform
+                .times(Mat4.translation(-4.5 * 1/3, -1.5 * 1/3, 0))
+                .times(Mat4.scale(.4 * 1/3, 4.5 * 1/3, .4 * 1/3))
+            
+            this.shapes.alien_ship_guns.draw(context, program_state, gun_transform_left, this.materials.alien_ship_guns);
+            this.shapes.alien_ship_guns.draw(context, program_state, gun_transform_right, this.materials.alien_ship_guns);
+            this.shoot_laser(t, context, program_state, gun_transform_left)
+            this.shoot_laser(t, context, program_state, gun_transform_right)
+        }
+         
+
+        animate_ship()
+
+        
+        
+
+    }
+
     // TODO: add texture to satellite
-    spawn_satellite(t, context, program_state, model_transform) {
+    spawn_satellite_left(t, context, program_state, model_transform) {
+        const speed = 12
         let satellite_transform = model_transform;
-        satellite_transform = satellite_transform.times(Mat4.translation(0, 0, 0)).times(Mat4.rotation(Math.PI / 2, 1, 0, 0)).times(Mat4.scale(.5, .5, 2));
+        satellite_transform = satellite_transform.times(Mat4.translation(speed * (t - 30), 0, 0)).times(Mat4.rotation(Math.PI / 2, 1, 0, 0)).times(Mat4.scale(.5, .5, 2));
+        this.shapes.satellite.draw(context, program_state, satellite_transform, this.materials.satellite);
+
+        let solar1_transform = satellite_transform;
+        let solar2_transform = satellite_transform;
+        let head_transform = satellite_transform;
+        let tail_transform = satellite_transform;
+        solar1_transform = solar1_transform.times(Mat4.scale(1.5, 1, 1/32)).times(Mat4.translation(1.5, 0, 0));
+        solar2_transform = solar2_transform.times(Mat4.scale(1.5, 1, 1/32)).times(Mat4.translation(-1.5, 0, 0));
+        head_transform = head_transform.times(Mat4.scale(1.75, 1.75, 1/10)).times(Mat4.translation(0, 0, -5.5));
+        tail_transform = tail_transform.times(Mat4.scale(1, 1, 1/4)).times(Mat4.translation(0, 0, 1.75));
+        this.shapes.solar_panel1.draw(context, program_state, solar1_transform, this.materials.solar_panel1);
+        this.shapes.solar_panel2.draw(context, program_state, solar2_transform, this.materials.solar_panel2);
+        this.shapes.satellite_head.draw(context, program_state, head_transform, this.materials.satellite_head);
+        this.shapes.satellite_tail.draw(context, program_state, tail_transform, this.materials.satellite_tail);
+    }
+
+    spawn_satellite_right(t, context, program_state, model_transform) {
+        const speed = 12
+        let satellite_transform = model_transform;
+        satellite_transform = satellite_transform.times(Mat4.translation(-speed * (t - 40), 0, 0)).times(Mat4.rotation(Math.PI / 2, 1, 0, 0)).times(Mat4.scale(.5, .5, 2));
         this.shapes.satellite.draw(context, program_state, satellite_transform, this.materials.satellite);
 
         let solar1_transform = satellite_transform;
@@ -272,6 +426,37 @@ export class Space extends Scene {
         if ((t >= 10 && t <= 20) || (t >= 110 && t <= 120)) {
             this.asteroid_belt(t, context, program_state, model_transform)
         }
+
+        if ((t >= 20 && t <= 30)) {
+            this.alien_attack(t, context, program_state, model_transform)
+        }
+
+        if ((t >= 30 && t <= 40)) {
+            this.satellite_hit_left(t, context, program_state, model_transform)
+        }
+
+        if ((t >= 40 && t <= 50)) {
+            this.satellite_hit_right(t, context, program_state, model_transform)
+        }
+    }
+
+     
+
+    spawn_text(t, context, program_state, model_transform) {
+        // spawn text
+        if ((t >= 0 && t <= 11.5)) {
+
+            model_transform = model_transform.times(Mat4.translation(-8.5, 10, -20))
+            const text_1 = "Xi Ching Ping"
+            this.shapes.text_test.set_string(text_1, context.context)
+            this.shapes.text_test.draw(context, program_state, model_transform, this.materials.text_test)
+
+            // transform the text downwards
+            model_transform = model_transform.times(Mat4.translation(1, -5, 0))
+            const text_2 = "Welcomes You"
+            this.shapes.text_test.set_string(text_2, context.context)
+            this.shapes.text_test.draw(context, program_state, model_transform, this.materials.text_test)
+        }
     }
 
     move_rocket(){
@@ -305,6 +490,19 @@ export class Space extends Scene {
         }
     }
 
+    zoom_camera(t, program_state, { duration = 5, start_time = 0}) {
+        if (t >= start_time && t <= start_time + duration) {
+            const t_clamped = Math.min((t - start_time) / duration, 1);
+            const interpolated_z = CAMERA.INIT_Z + t_clamped * (CAMERA.END_Z - CAMERA.INIT_Z);
+    
+            const camera_position = vec3(0, 10, interpolated_z);
+            program_state.set_camera(Mat4.look_at(
+                camera_position, vec3(0, 0, 0), vec3(0, 1, 0)
+            ));
+        } 
+    }
+
+
     make_control_panel() {
         // Draw the scene's buttons, setup their actions and keyboard shortcuts, and monitor live measurements.
         this.key_triggered_button("Change background color", ["b"], this.change_background);
@@ -327,12 +525,16 @@ export class Space extends Scene {
                                     function() { this.rocket_motion['E'] = false});
     }
 
+    
+
+
     display(context, program_state) {
         // Setup -- This part sets up the scene's overall camera matrix, projection matrix, and lights:
         if (!context.scratchpad.controls) {
             this.children.push(context.scratchpad.controls = new defs.Movement_Controls());
             program_state.set_camera(this.initial_camera_location);
         }
+        
 
         context.context.clearColor(this.background_colors[this.current_background][0], this.background_colors[this.current_background][1], this.background_colors[this.current_background][2], 1)
         const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
@@ -344,9 +546,10 @@ export class Space extends Scene {
         program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 10**10)];
 
         let model_transform = Mat4.identity()
+        this.zoom_camera(t, program_state, {duration: 6, start_time: 2})
         this.spawn_objects(t, context, program_state, model_transform)
         this.spawn_rocket(t, context, program_state, this.rocket_transform)
-
+        this.spawn_text(t, context, program_state, model_transform)
         this.move_rocket()
         
         if (t >= 15 && t <= 15.5) {
@@ -377,5 +580,14 @@ export class Space extends Scene {
 
         let model_transform_e_arrive = Mat4.identity().times(Mat4.translation(0, -80, -15)).times(Mat4.scale(20, 20, 20));
         model_transform_e_arrive = this.arrive_earth(t, context, program_state, model_transform_e_arrive);
+
+        
+
+        
+
+       
+       
+       
+
     }
 }

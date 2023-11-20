@@ -19,6 +19,8 @@ export class Space extends Scene {
             // asteroid: new defs.Cube(),
             black_hole: new BlackHole,
             heart_part: new defs.Cube(),
+            shield: new defs.Cube(),
+            speed_up: new defs.Cube(),
             face: new defs.Capped_Cylinder(20, 20),
             smile: new defs.Closed_Cone(20, 20),
             satellite: new defs.Capped_Cylinder(20, 20),
@@ -28,8 +30,6 @@ export class Space extends Scene {
             satellite_tail: new defs.Subdivision_Sphere(8),
             earth: new defs.Subdivision_Sphere(8),
             mars: new defs.Subdivision_Sphere(8),
-            // speed_up:
-            // shield: new defs
             rocket_body: new defs.Capped_Cylinder(20,20),
             rocket_head: new defs.Closed_Cone(20, 20),
             rocket_fin: new defs.Triangle(),
@@ -44,6 +44,10 @@ export class Space extends Scene {
             }),
             heart: new Material(new defs.Phong_Shader(),
                 {ambient: 0.8, diffusivity: 0.5, specularity: 0.2, color: hex_color("#880808")}),
+            shield: new Material(new defs.Phong_Shader(),
+                {ambient: 0.8, diffusivity: 0.5, specularity: 0.2, color: hex_color("#880808")}),
+            speed_up: new Material(new defs.Phong_Shader(),
+                {ambient: 0.8, diffusivity: 0.8, specularity: 0.2, color: hex_color("#ffb81c")}),
             face: new Material(new defs.Phong_Shader(),
                 {ambient: 0.8, diffusivity: 0.5, specularity: 0.2, color: hex_color("#000000")}),
             satellite: new Material(new defs.Phong_Shader(),
@@ -201,6 +205,18 @@ export class Space extends Scene {
         this.shapes.solar_panel2.draw(context, program_state, solar2_transform, this.materials.solar_panel2);
         this.shapes.satellite_head.draw(context, program_state, head_transform, this.materials.satellite_head);
         this.shapes.satellite_tail.draw(context, program_state, tail_transform, this.materials.satellite_tail);
+    }
+
+    spawn_speed_up(t, context, program_state, model_transform) {
+        if (t < 12) {
+            model_transform = Mat4.identity().times(Mat4.translation(0, -3 * t, 0)).times(model_transform);
+            this.shapes.speed_up.draw(context, program_state, model_transform, this.materials.speed_up);
+            model_transform = Mat4.identity().times(Mat4.translation(0, -1, 0)).times(model_transform);
+            this.shapes.speed_up.draw(context, program_state, model_transform, this.materials.speed_up);
+            model_transform = Mat4.identity().times(Mat4.translation(0, -1, 0)).times(model_transform);
+            this.shapes.speed_up.draw(context, program_state, model_transform, this.materials.speed_up);
+        }
+        return model_transform;
     }
 
     leave_earth(t, context, program_state, model_transform) {
@@ -370,6 +386,11 @@ export class Space extends Scene {
         else {
             program_state.set_camera(this.initial_camera_location);
         }
+
+        let model_transform_speed_up_left = Mat4.identity().times(Mat4.translation(-4, 20, 0)).times(Mat4.translation(-0.335, 0, 0)).times(Mat4.rotation(Math.PI / 6, 0, 0, 1)).times(Mat4.scale(6, 2, 1)).times(Mat4.scale(0.08, 0.08, 0.08));
+        model_transform_speed_up_left = this.spawn_speed_up(t, context, program_state, model_transform_speed_up_left)
+        let model_transform_speed_up_right = Mat4.identity().times(Mat4.translation(-4, 20, 0)).times(Mat4.translation(0.335, 0, 0)).times(Mat4.rotation(-Math.PI / 6, 0, 0, 1)).times(Mat4.scale(6, 2, 1)).times(Mat4.scale(0.08, 0.08, 0.08));
+        model_transform_speed_up_right = this.spawn_speed_up(t, context, program_state, model_transform_speed_up_right)
 
         // TODO: how often do we want black holes to show up
         let black_hole_transform = model_transform

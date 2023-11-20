@@ -19,7 +19,7 @@ export class Space extends Scene {
             // asteroid: new defs.Cube(),
             black_hole: new BlackHole,
             heart_part: new defs.Cube(),
-            shield: new defs.Cube(),
+            shield: new defs.Subdivision_Sphere(8),
             speed_up: new defs.Cube(),
             face: new defs.Capped_Cylinder(20, 20),
             smile: new defs.Closed_Cone(20, 20),
@@ -45,13 +45,13 @@ export class Space extends Scene {
             heart: new Material(new defs.Phong_Shader(),
                 {ambient: 0.8, diffusivity: 0.5, specularity: 0.2, color: hex_color("#880808")}),
             shield: new Material(new defs.Phong_Shader(),
-                {ambient: 0.8, diffusivity: 0.5, specularity: 0.2, color: hex_color("#880808")}),
+                {ambient: 0.4, diffusivity: 0.8, specularity: 0.8, color: hex_color("#08b8e8")}),
             speed_up: new Material(new defs.Phong_Shader(),
                 {ambient: 0.8, diffusivity: 0.8, specularity: 0.2, color: hex_color("#ffb81c")}),
             face: new Material(new defs.Phong_Shader(),
                 {ambient: 0.8, diffusivity: 0.5, specularity: 0.2, color: hex_color("#000000")}),
             satellite: new Material(new defs.Phong_Shader(),
-                {ambient: 0.8, diffusivity: 0.5, specularity: 0.2, color: hex_color("#F5F5DC")}),
+                {ambient: 0.8, diffusivity: 0.5, specularity: 0.2, color: hex_color("#f5f5dc")}),
             solar_panel1: new Material(new defs.Phong_Shader(),
                 {ambient: 0.8, diffusivity: 0.5, specularity: 0.2, color: hex_color("#0047ab")}),
             solar_panel2: new Material(new defs.Phong_Shader(),
@@ -123,7 +123,6 @@ export class Space extends Scene {
     }
 
     spawn_heart(t, context, program_state, model_transform) {
-
         let heart_transform = model_transform;
         heart_transform = heart_transform.times(Mat4.scale(7 / 4, 2 / 4, 1 / 4));
         this.shapes.heart_part.draw(context, program_state, heart_transform, this.materials.heart);
@@ -208,13 +207,22 @@ export class Space extends Scene {
     }
 
     spawn_speed_up(t, context, program_state, model_transform) {
-        if (t < 12) {
+        if (t <= 12) {
             model_transform = Mat4.identity().times(Mat4.translation(0, -3 * t, 0)).times(model_transform);
             this.shapes.speed_up.draw(context, program_state, model_transform, this.materials.speed_up);
             model_transform = Mat4.identity().times(Mat4.translation(0, -1, 0)).times(model_transform);
             this.shapes.speed_up.draw(context, program_state, model_transform, this.materials.speed_up);
             model_transform = Mat4.identity().times(Mat4.translation(0, -1, 0)).times(model_transform);
             this.shapes.speed_up.draw(context, program_state, model_transform, this.materials.speed_up);
+        }
+        return model_transform;
+    }
+
+    // TODO: add texture to shield bubble
+    spawn_shield(t, context, program_state, model_transform) {
+        if (t >= 3 && t <= 12) {
+            model_transform = Mat4.identity().times(Mat4.translation(0, -5 * (t - 3), 0)).times(model_transform);
+            this.shapes.shield.draw(context, program_state, model_transform, this.materials.shield);
         }
         return model_transform;
     }
@@ -380,7 +388,7 @@ export class Space extends Scene {
 
         this.move_rocket()
         
-        if (t >= 15 && t <= 16) {
+        if (t >= 15 && t <= 15.5) {
             this.shake_camera(t, program_state)
         }
         else {
@@ -391,6 +399,9 @@ export class Space extends Scene {
         model_transform_speed_up_left = this.spawn_speed_up(t, context, program_state, model_transform_speed_up_left)
         let model_transform_speed_up_right = Mat4.identity().times(Mat4.translation(-4, 20, 0)).times(Mat4.translation(0.335, 0, 0)).times(Mat4.rotation(-Math.PI / 6, 0, 0, 1)).times(Mat4.scale(6, 2, 1)).times(Mat4.scale(0.08, 0.08, 0.08));
         model_transform_speed_up_right = this.spawn_speed_up(t, context, program_state, model_transform_speed_up_right)
+
+        let model_transform_shield = Mat4.identity().times(Mat4.translation(6, 20, 0)).times(Mat4.scale(1.5, 1.5, 1.5));
+        model_transform_shield = this.spawn_shield(t, context, program_state, model_transform_shield)
 
         // TODO: how often do we want black holes to show up
         let black_hole_transform = model_transform

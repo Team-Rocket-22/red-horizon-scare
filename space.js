@@ -24,6 +24,10 @@ export class Space extends Scene {
             solar_panel2: new defs.Cube(),
             satellite_head: new defs.Cone_Tip(20, 20),
             satellite_tail: new defs.Subdivision_Sphere(8),
+            earth: new defs.Subdivision_Sphere(8),
+            mars: new defs.Subdivision_Sphere(8),
+            // speed_up:
+            // shield: new defs
             rocket_body: new defs.Capped_Cylinder(20,20),
             rocket_head: new defs.Closed_Cone(20, 20),
             rocket_fin: new defs.Triangle(),
@@ -52,9 +56,13 @@ export class Space extends Scene {
             satellite_head: new Material(new defs.Phong_Shader(),
                 {ambient: 0.8, diffusivity: 0.5, specularity: 0.2, color: hex_color("#4b4e52")}),
             satellite_tail: new Material(new defs.Phong_Shader(),
-                {ambient: 0.8, diffusivity: 0.5, specularity: 0.2, color: hex_color("#FFFFFF")}),
+                {ambient: 0.8, diffusivity: 0.5, specularity: 0.2, color: hex_color("#ffffff")}),
             black_hole: new Material(new defs.Phong_Shader(),
                 {ambient: 0.8, diffusivity: 0.5, specularity: 0.2, color: hex_color("#ffffff")}),
+            earth: new Material(new defs.Phong_Shader(),
+                {ambient: 0.5, diffusivity: 0.8, specularity: 0.5, color: hex_color("#023ca7")}),
+            mars: new Material(new defs.Phong_Shader(),
+                {ambient: 0.5, diffusivity: 0.8, specularity: 0.5, color: hex_color("#a43f2f")}),
             // rocket material colors don't matter because they will be overridden in display()
             rocket_body: new Material(new defs.Phong_Shader(),
                 {ambient: 0.8, diffusivity: 0.5, specularity: 0.2, color: hex_color("#000000")}),
@@ -108,6 +116,7 @@ export class Space extends Scene {
             this.shapes.asteroid.draw(context, program_state, asteroids[i], this.materials.asteroid)
         }
     }
+
     spawn_heart(t, context, program_state, model_transform) {
 
         let heart_transform = model_transform;
@@ -188,6 +197,45 @@ export class Space extends Scene {
         this.shapes.satellite_tail.draw(context, program_state, tail_transform, this.materials.satellite_tail);
     }
 
+    leave_earth(t, context, program_state, model_transform) {
+        if (t >= 0 && t <= 2) {
+            this.shapes.earth.draw(context, program_state, model_transform, this.materials.earth);
+        }
+        else if (t > 2 && t <= 10) {
+            model_transform = model_transform.times(Mat4.translation(0, -0.2 * (t - 2), 0));
+            this.shapes.earth.draw(context, program_state, model_transform, this.materials.earth);
+        }
+        return model_transform
+    }
+
+    arrive_earth(t, context, program_state, model_transform) {
+        if (t > 35 && t <= 42) {
+            model_transform = model_transform.times(Mat4.translation(0, 0.2 * (t - 35), 0));
+            this.shapes.earth.draw(context, program_state, model_transform, this.materials.earth);
+        }
+        else if (t > 42) {
+            model_transform = model_transform.times(Mat4.translation(0, 1.4, 0));
+            this.shapes.earth.draw(context, program_state, model_transform, this.materials.earth);
+        }
+        return model_transform
+    }
+
+    spawn_mars(t, context, program_state, model_transform) {
+        if (t >= 20 && t <= 24) {
+            model_transform = model_transform.times(Mat4.translation(0, -0.2 * (t - 20), 0));
+            this.shapes.mars.draw(context, program_state, model_transform, this.materials.mars);
+        }
+        else if (t > 24 && t <= 30) {
+            model_transform = model_transform.times(Mat4.translation(0, -0.8, 0));
+            this.shapes.mars.draw(context, program_state, model_transform, this.materials.mars);
+        }
+        else if (t > 30 && t <= 35) {
+            model_transform = model_transform.times(Mat4.translation(0, 0.2 * (t - 30), 0)).times(Mat4.translation(0, -0.8, 0));
+            this.shapes.mars.draw(context, program_state, model_transform, this.materials.mars);
+        }
+        return model_transform
+    }
+
     spawn_objects(t, context, program_state, model_transform) {
         // asteroid belt there and back
         if ((t >= 10 && t <= 20) || (t >= 110 && t <= 120)) {
@@ -264,6 +312,14 @@ export class Space extends Scene {
         // this.shapes.asteroid.draw(context, program_state, model_transform.times(Mat4.translation(5, 0, 0)).times(Mat4.scale(3, 4.5, 3)).times(Mat4.rotation(Math.PI * (t*0.1), 0, 1, 0)), this.materials.asteroid_flat)
         // this.shapes.asteroid.draw(context, program_state, model_transform.times(Mat4.translation(-5, 0, 0)).times(Mat4.scale(3, 4.5, 3)).times(Mat4.rotation(Math.PI * (t*0.1), 0, 1, 0)), this.materials.asteroid)
 
+        let model_transform_e_leave = Mat4.identity().times(Mat4.translation(0, -30, -15)).times(Mat4.scale(20, 20, 20));
+        model_transform_e_leave = this.leave_earth(t, context, program_state, model_transform_e_leave);
+
+        let model_transform_m= Mat4.identity().times(Mat4.translation(0, 30, -30)).times(Mat4.scale(20, 20, 20));
+        model_transform_m = this.spawn_mars(t, context, program_state, model_transform_m);
+
+        let model_transform_e_arrive = Mat4.identity().times(Mat4.translation(0, -65, -15)).times(Mat4.scale(20, 20, 20));
+        model_transform_e_arrive = this.arrive_earth(t, context, program_state, model_transform_e_arrive);
 
         let black_hole_transform = model_transform
         black_hole_transform = black_hole_transform.times(Mat4.scale(4, 1, 0.25)).times(Mat4.translation(3, 0, 0))

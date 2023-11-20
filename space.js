@@ -265,6 +265,15 @@ export class Space extends Scene {
         this.rocket_transform = this.rocket_transform.times(Mat4.translation(horizontal, vertical, 0))
     }
 
+    shake_camera(t, program_state) {
+        if (t * 1000 % 2 > 1) {
+            program_state.set_camera(this.initial_camera_location.times(Mat4.rotation(Math.PI / 32, 0, 0, 1)));
+        }
+        else {
+            program_state.set_camera(this.initial_camera_location.times(Mat4.rotation(-Math.PI / 32, 0, 0, 1)));
+        }
+    }
+
     make_control_panel() {
         // Draw the scene's buttons, setup their actions and keyboard shortcuts, and monitor live measurements.
         this.key_triggered_button("Change background color", ["b"], this.change_background);
@@ -308,6 +317,14 @@ export class Space extends Scene {
         this.spawn_rocket(t, context, program_state, this.rocket_transform)
 
         this.move_rocket()
+        
+        if (t >= 15 && t <= 16) {
+            this.shake_camera(t, program_state)
+        }
+        else {
+            program_state.set_camera(this.initial_camera_location);
+        }
+
         // this.shapes.asteroid.draw(context, program_state, model_transform.times(Mat4.translation(-5, 0, 0)).times(Mat4.scale(3, 4.5, 3)).times(Mat4.rotation(Math.PI * (t*0.1), 0, 1, 0)), this.materials.asteroid)
         // this.shapes.asteroid.draw(context, program_state, model_transform.times(Mat4.translation(5, 0, 0)).times(Mat4.scale(3, 4.5, 3)).times(Mat4.rotation(Math.PI * (t*0.1), 0, 1, 0)), this.materials.asteroid_flat)
         // this.shapes.asteroid.draw(context, program_state, model_transform.times(Mat4.translation(-5, 0, 0)).times(Mat4.scale(3, 4.5, 3)).times(Mat4.rotation(Math.PI * (t*0.1), 0, 1, 0)), this.materials.asteroid)

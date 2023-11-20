@@ -1,5 +1,7 @@
 import {defs, tiny} from './examples/common.js';
 import {Asteroid} from './shapes/asteroid.js';
+import { BlackHole } from './shapes/black_hole.js';
+import {shaders} from './shaders.js'
 
 const {
     Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Material, Scene, Texture
@@ -13,9 +15,9 @@ export class Space extends Scene {
         // At the beginning of our program, load one of each of these shape definitions onto the GPU.
 
         this.shapes = {
-            // asteroid: new Asteroid(),
-            asteroid: new defs.Subdivision_Sphere(5),
-            black_hole: new defs.Capped_Cylinder(20, 20),
+            asteroid: new Asteroid(),
+            // asteroid: new defs.Cube(),
+            black_hole: new BlackHole,
             heart_part: new defs.Cube(),
             face: new defs.Capped_Cylinder(20, 20),
             smile: new defs.Closed_Cone(20, 20),
@@ -36,13 +38,9 @@ export class Space extends Scene {
 
         // *** Materials
         this.materials = {
-            asteroid_flat: new Material(new defs.Textured_Phong(), {
-                color: hex_color("#3f4145"),
-                ambient: 0.8, diffusivity: 0, specularity: 0.2, texture: new Texture("assets/asteroid.png")
-            }),
-            asteroid: new Material(new defs.Fake_Bump_Map(), {
-                color: hex_color("#3f4145"),
-                ambient: 0.8, diffusivity: 0, specularity: 0.2, texture: new Texture("assets/asteroid.png")
+            asteroid: new Material(new shaders.Bump_Mapped(), {
+                color: hex_color("#000000"),
+                ambient: 0.8, diffusivity: 0, specularity: 0.2, texture: new Texture("assets/asteroid.jpeg"), 
             }),
             heart: new Material(new defs.Phong_Shader(),
                 {ambient: 0.8, diffusivity: 0.5, specularity: 0.2, color: hex_color("#880808")}),
@@ -58,8 +56,8 @@ export class Space extends Scene {
                 {ambient: 0.8, diffusivity: 0.5, specularity: 0.2, color: hex_color("#4b4e52")}),
             satellite_tail: new Material(new defs.Phong_Shader(),
                 {ambient: 0.8, diffusivity: 0.5, specularity: 0.2, color: hex_color("#ffffff")}),
-            black_hole: new Material(new defs.Phong_Shader(),
-                {ambient: 0.8, diffusivity: 0.5, specularity: 0.2, color: hex_color("#ffffff")}),
+            black_hole: new Material(new shaders.Ring_Shader(),
+                {ambient: 0.8, diffusivity: 0.5, specularity: 0.3}),
             earth: new Material(new defs.Phong_Shader(),
                 {ambient: 0.5, diffusivity: 0.8, specularity: 0.5, color: hex_color("#023ca7")}),
             mars: new Material(new defs.Phong_Shader(),
@@ -244,6 +242,46 @@ export class Space extends Scene {
         return model_transform
     }
 
+    leave_earth(t, context, program_state, model_transform) {
+        if (t >= 0 && t <= 2) {
+            this.shapes.earth.draw(context, program_state, model_transform, this.materials.earth);
+        }
+        else if (t > 2 && t <= 10) {
+            model_transform = model_transform.times(Mat4.translation(0, -0.2 * (t - 2), 0));
+            this.shapes.earth.draw(context, program_state, model_transform, this.materials.earth);
+        }
+        return model_transform
+    }
+
+    arrive_earth(t, context, program_state, model_transform) {
+        if (t > 35 && t <= 42) {
+            model_transform = model_transform.times(Mat4.translation(0, 0.2 * (t - 35), 0));
+            this.shapes.earth.draw(context, program_state, model_transform, this.materials.earth);
+        }
+        else if (t > 42) {
+            model_transform = model_transform.times(Mat4.translation(0, 1.4, 0));
+            this.shapes.earth.draw(context, program_state, model_transform, this.materials.earth);
+        }
+        return model_transform
+    }
+
+    spawn_mars(t, context, program_state, model_transform) {
+        if (t >= 20 && t <= 24) {
+            model_transform = model_transform.times(Mat4.translation(0, -0.2 * (t - 20), 0));
+            this.shapes.mars.draw(context, program_state, model_transform, this.materials.mars);
+        }
+        else if (t > 24 && t <= 30) {
+            model_transform = model_transform.times(Mat4.translation(0, -0.8, 0));
+            this.shapes.mars.draw(context, program_state, model_transform, this.materials.mars);
+        }
+        else if (t > 30 && t <= 35) {
+            model_transform = model_transform.times(Mat4.translation(0, 0.2 * (t - 30), 0)).times(Mat4.translation(0, -0.8, 0));
+            this.shapes.mars.draw(context, program_state, model_transform, this.materials.mars);
+        }
+        return model_transform
+    }
+
+    // TODO: add logic for when other objects spawn
     spawn_objects(t, context, program_state, model_transform) {
         // asteroid belt there and back
         if ((t >= 10 && t <= 20) || (t >= 110 && t <= 120)) {
@@ -333,9 +371,10 @@ export class Space extends Scene {
             program_state.set_camera(this.initial_camera_location);
         }
 
-        // this.shapes.asteroid.draw(context, program_state, model_transform.times(Mat4.translation(-5, 0, 0)).times(Mat4.scale(3, 4.5, 3)).times(Mat4.rotation(Math.PI * (t*0.1), 0, 1, 0)), this.materials.asteroid)
-        // this.shapes.asteroid.draw(context, program_state, model_transform.times(Mat4.translation(5, 0, 0)).times(Mat4.scale(3, 4.5, 3)).times(Mat4.rotation(Math.PI * (t*0.1), 0, 1, 0)), this.materials.asteroid_flat)
-        // this.shapes.asteroid.draw(context, program_state, model_transform.times(Mat4.translation(-5, 0, 0)).times(Mat4.scale(3, 4.5, 3)).times(Mat4.rotation(Math.PI * (t*0.1), 0, 1, 0)), this.materials.asteroid)
+        // TODO: how often do we want black holes to show up
+        let black_hole_transform = model_transform
+        black_hole_transform = black_hole_transform.times(Mat4.translation(0, 0, 0)).times(Mat4.rotation(Math.PI * 0.25, 1, 0, 0)).times(Mat4.scale(3, 3, 0.01))
+        // this.shapes.black_hole.draw(context, program_state, black_hole_transform, this.materials.black_hole)
 
         let model_transform_e_leave = Mat4.identity().times(Mat4.translation(0, -30, -15)).times(Mat4.scale(20, 20, 20));
         model_transform_e_leave = this.leave_earth(t, context, program_state, model_transform_e_leave);
@@ -345,8 +384,5 @@ export class Space extends Scene {
 
         let model_transform_e_arrive = Mat4.identity().times(Mat4.translation(0, -65, -15)).times(Mat4.scale(20, 20, 20));
         model_transform_e_arrive = this.arrive_earth(t, context, program_state, model_transform_e_arrive);
-
-        let black_hole_transform = model_transform
-        black_hole_transform = black_hole_transform.times(Mat4.scale(4, 1, 0.25)).times(Mat4.translation(3, 0, 0))
     }
 }

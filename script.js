@@ -3,7 +3,7 @@ let audio = null; // Declare audio variable in the global scope
 
 function background_music() {
     // Create an audio object
-    audio = new Audio('./assets/starwars.mp3');
+    audio = new Audio('./assets/nasa.mp3');
 
     // Play the sound
     audio.play();

@@ -20,8 +20,6 @@ export class Space extends Scene {
         // At the beginning of our program, load one of each of these shape definitions onto the GPU.
 
         this.shapes = {
-            asteroid: new Asteroid(),
-            // asteroid: new defs.Cube(),
             black_hole: new BlackHole,
             heart_part: new defs.Cube(),
             shield: new defs.Subdivision_Sphere(8),
@@ -72,7 +70,7 @@ export class Space extends Scene {
             satellite_tail: new Material(new defs.Phong_Shader(),
                 {ambient: 0.8, diffusivity: 0.5, specularity: 0.2, color: hex_color("#ffffff")}),
             black_hole: new Material(new shaders.Ring_Shader(),
-                {ambient: 0.8, diffusivity: 0.5, specularity: 0.3}),
+                {ambient: 0.8, diffusivity: 0.5, specularity: 0.3, radius: 5.0}),
             earth: new Material(new defs.Phong_Shader(),
                 {ambient: 0.5, diffusivity: 0.8, specularity: 0.5, color: hex_color("#023ca7")}),
             mars: new Material(new defs.Phong_Shader(),
@@ -103,14 +101,6 @@ export class Space extends Scene {
 
         this.background_colors = [hex_color("#000000"), hex_color("#000435"), hex_color("#36013f")]
         this.current_background = 0
-        this.asteroid_positions = []
-        for (let i = 0; i < 10; i++) {
-            this.asteroid_positions.push(Math.floor(Math.random() * (31) - 15 ))
-        }
-        this.asteroid_angles = []
-        for (let i = 0; i < 10; i++) {
-            this.asteroid_angles.push(Math.random() * 2)
-        }
         this.alien_positions = []
         for (let i = 0; i < 7; i++) {
             this.alien_positions.push(Math.floor(Math.random() * (60) - 30 ))
@@ -123,7 +113,6 @@ export class Space extends Scene {
         for (let i = 0; i < 12; i++) {
             this.satellite_positions_right.push(Math.floor(Math.random() * (80) - 0 ))
         }
-        console.log(this.asteroid_angles)
         // TODO: what rocket colors do we want
         this.rocket_colors = [hex_color("#850e05"), hex_color("#61abff"), hex_color("#4e4e54"), hex_color("#023b02"), hex_color("#FF0000")]
         this.rocket_extras_colors = [hex_color("#2ebdff"), hex_color("#ea94d5"), hex_color("#ff1b1b"), hex_color("#7c61ff"), hex_color("#FFD700")]
@@ -132,7 +121,19 @@ export class Space extends Scene {
         this.stay_camera_location = Mat4.look_at(vec3(0, 10, CAMERA.INIT_Z), vec3(0, 0, 0), vec3(0, 1, 0));
 
         this.hp = 3
-        
+
+        this.asteroids = []
+        for (let i = 0; i < 15; i++) {
+            let ast = new Asteroid()
+            this.asteroids.push(ast)
+        }
+
+        this.black_hole_positions = []
+        this.black_hole_positions.push(Mat4.translation(Math.floor(Math.random() * (25) + 6), Math.floor(Math.random() * (33) - 18), 0))
+        this.black_hole_positions.push(Mat4.translation(Math.floor(Math.random() * (25) -30), Math.floor(Math.random() * (33) - 18), 0))
+
+        console.log(this.black_hole_positions)
+ 
         // user-controlled rocket movement for next frame in North, South, East, and West
         this.rocket_motion = {
             'N': false,
@@ -159,11 +160,10 @@ export class Space extends Scene {
 
     // TODO: number of asteroids, asteroid speed? change based on level?
     asteroid_belt(t, context, program_state, model_transform) {
-        let asteroids = []
-        for (let i = 0; i < this.asteroid_positions.length; i++) {
-            asteroids[i] = model_transform
-            asteroids[i] = asteroids[i].times(Mat4.rotation(this.asteroid_angles[i] * Math.PI, 0, 1, 0)).times(Mat4.translation(this.asteroid_positions[i], 30 + (i * 5), 0)).times(Mat4.scale(1, 1.5, 1)).times(Mat4.translation(0, -(t % 10) * 7, 0))
-            this.shapes.asteroid.draw(context, program_state, asteroids[i], this.materials.asteroid)
+        for (let i = 0; i < this.asteroids.length; i++) {
+            let ast_transform = model_transform
+            ast_transform = ast_transform.times(Mat4.rotation(this.asteroids[i].angle, 0, 1, 0)).times(Mat4.translation(this.asteroids[i].xPos, 120 + (i * 5), 0)).times(Mat4.scale(1, 1.5, 1)).times(Mat4.translation(0, (-t * 7), 0))
+            this.asteroids[i].draw(context, program_state, ast_transform, this.materials.asteroid)
         }
     }
 
@@ -423,13 +423,28 @@ export class Space extends Scene {
         return model_transform
     }
 
-    // TODO: add logic for when other objects spawn
-    spawn_objects(t, context, program_state, model_transform) {
-        // asteroid belt there and back
-        if ((t >= 10 && t <= 20) || (t >= 110 && t <= 120)) {
-            this.asteroid_belt(t, context, program_state, model_transform)
+    spawn_black_hole(t, context, program_state, model_transform) {
+        let radius = 4 * Math.sin(Math.PI * t/15)
+        radius = Math.max(-radius, radius)
+        if (radius < 0.5) {
+            this.black_hole_positions[0] = (Mat4.translation(Math.floor(Math.random() * (25) + 6), Math.floor(Math.random() * (33) - 18), 0))
+            this.black_hole_positions[1] = (Mat4.translation(Math.floor(Math.random() * (25) -30), Math.floor(Math.random() * (33) - 18), 0))
         }
 
+        let black_hole_transform_1 = model_transform.times(this.black_hole_positions[0]).times(Mat4.scale(radius, radius, 0.01))
+        let black_hole_transform_2 = model_transform.times(this.black_hole_positions[1]).times(Mat4.scale(radius, radius, 0.01))
+        this.shapes.black_hole.draw(context, program_state, black_hole_transform_1, this.materials.black_hole.override({radius: radius}))
+        this.shapes.black_hole.draw(context, program_state, black_hole_transform_2, this.materials.black_hole.override({radius: radius}))
+    }
+
+    // TODO: add logic for when other objects spawn
+    spawn_objects(t, context, program_state, model_transform) {
+        if (t > 5) {
+            this.spawn_black_hole(t - 5, context, program_state, model_transform)
+        }
+        if ((t >= 10 && t <= 25)) {
+            this.asteroid_belt(t, context, program_state, model_transform)
+        }
         if ((t >= 20 && t <= 30)) {
             this.alien_attack(t, context, program_state, model_transform)
         }
@@ -565,10 +580,6 @@ export class Space extends Scene {
         let model_transform_shield = Mat4.identity().times(Mat4.translation(6, 20, 0)).times(Mat4.scale(1.5, 1.5, 1.5));
         model_transform_shield = this.spawn_shield(t, context, program_state, model_transform_shield)
 
-        // TODO: how often do we want black holes to show up
-        let black_hole_transform = model_transform
-        black_hole_transform = black_hole_transform.times(Mat4.translation(0, 0, 0)).times(Mat4.rotation(Math.PI * 0.25, 1, 0, 0)).times(Mat4.scale(3, 3, 0.01))
-        // this.shapes.black_hole.draw(context, program_state, black_hole_transform, this.materials.black_hole)
 
         let model_transform_e_leave = Mat4.identity().times(Mat4.translation(0, -30, -15)).times(Mat4.scale(20, 20, 20));
         model_transform_e_leave = this.leave_earth(t, context, program_state, model_transform_e_leave);

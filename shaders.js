@@ -37,8 +37,7 @@ const Bump_Mapped = shaders.Bump_Mapped =
         }
     }
 
-
-const Ring_Shader = shaders.Ring_Shader =
+const Ring_Shader = shaders.Ring_Shader = 
     class Ring_Shader extends Shader {
         update_GPU(context, gpu_addresses, graphics_state, model_transform, material) {
             // update_GPU():  Defining how to synchronize our JavaScript's variables to the GPU's:
@@ -47,6 +46,13 @@ const Ring_Shader = shaders.Ring_Shader =
             context.uniformMatrix4fv(gpu_addresses.model_transform, false, Matrix.flatten_2D_to_1D(model_transform.transposed()));
             context.uniformMatrix4fv(gpu_addresses.projection_camera_model_transform, false,
                 Matrix.flatten_2D_to_1D(PCM.transposed()));
+            this.send_material(context, gpu_addresses, material);
+        }
+
+        send_material(gl, gpu, material) {
+            // send_material(): Send the desired shape-wide material qualities to the
+            // graphics card, where they will tweak the Phong lighting formula.
+            gl.uniform1f(gpu.radius, material.radius);
         }
 
         shared_glsl_code() {
@@ -55,6 +61,7 @@ const Ring_Shader = shaders.Ring_Shader =
                 precision mediump float;
                 varying vec4 point_position;
                 varying vec4 center;
+                uniform float radius;
             `;
         }
 
@@ -66,19 +73,17 @@ const Ring_Shader = shaders.Ring_Shader =
             uniform mat4 projection_camera_model_transform;
             
             void main(){
-                gl_Position = projection_camera_model_transform * vec4(position, 1.0);
-                center = model_transform * vec4(0.0, 0.0, 0.0, 1.0);
-                point_position = model_transform * vec4(position, 1.0);
+            gl_Position = projection_camera_model_transform * vec4(position, 1.0);
+            center = model_transform * vec4(0.0, 0.0, 0.0, 1.0);
+            point_position = model_transform * vec4(position, 1.0);
             }`;
         }
 
         fragment_glsl_code() {
             // ********* FRAGMENT SHADER *********
-            // TODO:  Complete the main function of the fragment shader (Extra Credit Part II).
             return this.shared_glsl_code() + `
             void main(){
-                float rad = 3.0;
-                if (distance(point_position.xyz, center.xyz) > 2.8) {
+                if (distance(point_position.xyz, center.xyz) > (radius * 0.93)) {
                     gl_FragColor = vec4(0.69,0.502,0.251, 1.0);
                 } else {
                     gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);

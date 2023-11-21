@@ -19,10 +19,10 @@ function toggleVolume() {
     }
 }
 
-// Call the background_music function to start playing the music
-background_music();
+// Call the background_music function to start playing the music when the page loads
+document.getElementById("startMusic").addEventListener("click", background_music);
 
-// Add event listener for the button click
+// Add event listener for the volume toggle button click
 document.getElementById("volumeToggle").addEventListener("click", toggleVolume);
 
 // Indicate which element on the page you want the Canvas_Widget to replace with a 3D WebGL area:

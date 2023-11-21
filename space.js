@@ -507,19 +507,19 @@ export class Space extends Scene {
         // Draw the scene's buttons, setup their actions and keyboard shortcuts, and monitor live measurements.
         this.key_triggered_button("Change background color", ["b"], this.change_background);
         this.key_triggered_button("Change rocket color", ["c"], this.change_rocket_color);
-        this.key_triggered_button("Move rocket up", ["i"], 
+        this.key_triggered_button("Move rocket up", ["w"], 
                                     function() { this.rocket_motion['N'] = true},
                                     '#6E6460',
                                     function() { this.rocket_motion['N'] = false});
-        this.key_triggered_button("Move rocket down", ["k"], 
+        this.key_triggered_button("Move rocket down", ["s"], 
                                     function() { this.rocket_motion['S'] = true},
                                     '#6E6460',
                                     function() { this.rocket_motion['S'] = false});
-        this.key_triggered_button("Move rocket left", ["j"], 
+        this.key_triggered_button("Move rocket left", ["a"], 
                                     function() { this.rocket_motion['W'] = true},
                                     '#6E6460',
                                     function() { this.rocket_motion['W'] = false});
-        this.key_triggered_button("Move rocket right", ["l"],
+        this.key_triggered_button("Move rocket right", ["d"],
                                     function() { this.rocket_motion['E'] = true},
                                     '#6E6460',
                                     function() { this.rocket_motion['E'] = false});

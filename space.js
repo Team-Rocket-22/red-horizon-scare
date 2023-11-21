@@ -505,7 +505,7 @@ export class Space extends Scene {
             this.stay_camera_location = Mat4.look_at(
                 camera_position, vec3(0, 0, 0), vec3(0, 1, 0)
             )
-            program_state.set_camera(this.stay_camera_location);
+            // program_state.set_camera(this.stay_camera_location);
         } 
     }
 

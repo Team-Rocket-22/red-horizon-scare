@@ -7,6 +7,8 @@ function background_music() {
 
     // Play the sound
     audio.play();
+    document.getElementById("startMusic").removeEventListener("click", background_music);
+
 }
 
 function toggleVolume() {

@@ -231,6 +231,16 @@ export class Space extends Scene {
         this.shapes.heart_part.draw(context, program_state, heart_transform5, this.materials.heart);
     }
 
+    spawn_healthbar(t, context, program_state, model_transform){
+        let healthbar_transform = model_transform;
+        healthbar_transform = healthbar_transform.times(Mat4.translation(-32.5, 18, 0));
+        this.spawn_heart(t, context, program_state, healthbar_transform);
+        healthbar_transform = healthbar_transform.times(Mat4.translation(4, 0, 0));
+        this.spawn_heart(t, context, program_state, healthbar_transform);
+        healthbar_transform = healthbar_transform.times(Mat4.translation(4, 0, 0));
+        this.spawn_heart(t, context, program_state, healthbar_transform);
+    }
+
     spawn_rocket(t, context, program_state, model_transform){
         // Just placeholder to make rocket object
         let rocket_body_transform = model_transform
@@ -556,6 +566,7 @@ export class Space extends Scene {
         this.spawn_rocket(t, context, program_state, this.rocket_transform)
         this.spawn_text(t, context, program_state, model_transform)
         this.move_rocket()
+        this.spawn_healthbar(t, context, program_state, model_transform)
         
         if (t >= 15 && t <= 15.5) {
             this.shake_camera(t, program_state)

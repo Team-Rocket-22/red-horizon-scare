@@ -7,7 +7,7 @@ import { Text_Demo, Text_Line } from './examples/text-demo.js'
 const {
     Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Material, Scene, Texture
 } = tiny;
-const PLAYER_SPEED = 0.1;
+let PLAYER_SPEED = 0.12;
 const CAMERA = {
     INIT_Z: 10,
     END_Z: 50,
@@ -130,8 +130,8 @@ export class Space extends Scene {
         }
         console.log(this.asteroid_angles)
         // TODO: what rocket colors do we want
-        this.rocket_colors = [hex_color("#850e05"), hex_color("#61abff"), hex_color("#4e4e54"), hex_color("#023b02")]
-        this.rocket_extras_colors = [hex_color("#2ebdff"), hex_color("#ea94d5"), hex_color("#ff1b1b"), hex_color("#7c61ff")]
+        this.rocket_colors = [hex_color("#850e05"), hex_color("#61abff"), hex_color("#4e4e54"), hex_color("#023b02"), hex_color("#FF0000")]
+        this.rocket_extras_colors = [hex_color("#2ebdff"), hex_color("#ea94d5"), hex_color("#ff1b1b"), hex_color("#7c61ff"), hex_color("#FFD700")]
         this.current_rocket = 2
         // this.initial_camera_location = Mat4.look_at(vec3(0, 10, CAMERA.INIT_Z), vec3(0, 0, 0), vec3(0, 1, 0));
         this.stay_camera_location = Mat4.look_at(vec3(0, 10, CAMERA.INIT_Z), vec3(0, 0, 0), vec3(0, 1, 0));

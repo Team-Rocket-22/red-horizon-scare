@@ -45,11 +45,6 @@ export class Space extends Scene {
             alien_ship_head: new defs.Subdivision_Sphere(4),
             alien_ship_guns: new defs.Capped_Cylinder(20,20),
             laser: new defs.Capped_Cylinder(20,20),
-
-
-            
-            
-
         };
 
         // *** Materials
@@ -269,9 +264,7 @@ export class Space extends Scene {
         }
 
         rocket_hitbox_transform = rocket_hitbox_transform.times(Mat4.scale(1.15, 2.25, 1.15)).times(Mat4.translation(0, 0.15, 0))
-        this.shapes.rocket_hitbox.draw(context, program_state, rocket_hitbox_transform,
-             this.materials.rocket_hitbox)
-
+        this.shapes.rocket_hitbox.draw(context, program_state, rocket_hitbox_transform, this.materials.rocket_hitbox)
     }
 
     shoot_laser(t, context, program_state, model_transform) {
@@ -285,7 +278,6 @@ export class Space extends Scene {
                 .times(Mat4.translation(0, 0, 0))
                 .times(Mat4.scale(.6, .6, .6))
             this.shapes.laser.draw(context, program_state, laser_transform, this.materials.laser);
-
         }
 
         animate_laser(t)
@@ -326,13 +318,8 @@ export class Space extends Scene {
             this.shoot_laser(t, context, program_state, gun_transform_left)
             this.shoot_laser(t, context, program_state, gun_transform_right)
         }
-         
 
         animate_ship()
-
-        
-        
-
     }
 
     // TODO: add texture to satellite
@@ -456,12 +443,9 @@ export class Space extends Scene {
         }
     }
 
-     
-
     spawn_text(t, context, program_state, model_transform) {
         // spawn text
         if ((t >= 0 && t <= 11.5)) {
-
             model_transform = model_transform.times(Mat4.translation(-11, 10, -20))
             const text_1 = "Red Horizon Scare"
             this.shapes.text_test.set_string(text_1, context.context)
@@ -519,7 +503,6 @@ export class Space extends Scene {
         } 
     }
 
-
     make_control_panel() {
         // Draw the scene's buttons, setup their actions and keyboard shortcuts, and monitor live measurements.
         this.key_triggered_button("Change background color", ["b"], this.change_background);
@@ -542,9 +525,6 @@ export class Space extends Scene {
                                     function() { this.rocket_motion['E'] = false});
     }
 
-    
-
-
     display(context, program_state) {
         // Setup -- This part sets up the scene's overall camera matrix, projection matrix, and lights:
         if (!context.scratchpad.controls) {
@@ -553,11 +533,8 @@ export class Space extends Scene {
             
         }
         
-
         context.context.clearColor(this.background_colors[this.current_background][0], this.background_colors[this.current_background][1], this.background_colors[this.current_background][2], 1)
         const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
-
-       
 
         program_state.projection_transform = Mat4.perspective(
             Math.PI / 4, context.width / context.height, .1, 1000);
@@ -596,19 +573,10 @@ export class Space extends Scene {
         let model_transform_e_leave = Mat4.identity().times(Mat4.translation(0, -30, -15)).times(Mat4.scale(20, 20, 20));
         model_transform_e_leave = this.leave_earth(t, context, program_state, model_transform_e_leave);
 
-        let model_transform_m= Mat4.identity().times(Mat4.translation(0, 40, -30)).times(Mat4.scale(20, 20, 20));
+        let model_transform_m= Mat4.identity().times(Mat4.translation(0, 50, -30)).times(Mat4.scale(20, 20, 20));
         model_transform_m = this.spawn_mars(t, context, program_state, model_transform_m);
 
         let model_transform_e_arrive = Mat4.identity().times(Mat4.translation(0, -80, -15)).times(Mat4.scale(20, 20, 20));
         model_transform_e_arrive = this.arrive_earth(t, context, program_state, model_transform_e_arrive);
-
-        
-
-        
-
-       
-       
-       
-
     }
 }

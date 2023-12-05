@@ -99,7 +99,7 @@ export class Space extends Scene {
 
         }
 
-        this.background_colors = [hex_color("#000000"), hex_color("#000435"), hex_color("#36013f")]
+        this.background_images = ["/assets/stars.jpeg", "/assets/space_1.avif", "/assets/galaxy.webp", "/assets/purple_space.avif"]
         this.current_background = 0
         this.alien_positions = []
         for (let i = 0; i < 7; i++) {
@@ -131,8 +131,6 @@ export class Space extends Scene {
         this.black_hole_positions = []
         this.black_hole_positions.push(Mat4.translation(Math.floor(Math.random() * (25) + 6), Math.floor(Math.random() * (33) - 18), 0))
         this.black_hole_positions.push(Mat4.translation(Math.floor(Math.random() * (25) -30), Math.floor(Math.random() * (33) - 18), 0))
-
-        console.log(this.black_hole_positions)
  
         // user-controlled rocket movement for next frame in North, South, East, and West
         this.rocket_motion = {
@@ -146,7 +144,9 @@ export class Space extends Scene {
 
 
     change_background() {
-        this.current_background = (this.current_background + 1) % (this.background_colors.length)
+        this.current_background = (this.current_background + 1) % (this.background_images.length)
+        // document.body.style.backgroundImage = `url(${this.background_images[this.current_background]})`;
+        document.getElementById("main-canvas").style.backgroundImage = `url(${this.background_images[this.current_background]})`
     }
 
     change_rocket_color() {
@@ -230,11 +230,10 @@ export class Space extends Scene {
     spawn_healthbar(t, context, program_state, model_transform){
         let healthbar_transform = model_transform;
         healthbar_transform = healthbar_transform.times(Mat4.translation(-32.5, 18, 0));
-        this.spawn_heart(t, context, program_state, healthbar_transform);
-        healthbar_transform = healthbar_transform.times(Mat4.translation(4, 0, 0));
-        this.spawn_heart(t, context, program_state, healthbar_transform);
-        healthbar_transform = healthbar_transform.times(Mat4.translation(4, 0, 0));
-        this.spawn_heart(t, context, program_state, healthbar_transform);
+        for (let i = 0; i < this.hp; i++){
+            this.spawn_heart(t, context, program_state, healthbar_transform);
+            healthbar_transform = healthbar_transform.times(Mat4.translation(4, 0, 0));
+        }
     }
 
     spawn_rocket(t, context, program_state, model_transform){
@@ -548,7 +547,8 @@ export class Space extends Scene {
             
         }
         
-        context.context.clearColor(this.background_colors[this.current_background][0], this.background_colors[this.current_background][1], this.background_colors[this.current_background][2], 1)
+        // context.context.clearColor(this.background_colors[this.current_background][0], this.background_colors[this.current_background][1], this.background_colors[this.current_background][2], 1)
+        context.context.clearColor(0, 0, 0, 0)
         const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
 
         program_state.projection_transform = Mat4.perspective(

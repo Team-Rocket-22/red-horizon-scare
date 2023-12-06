@@ -139,6 +139,7 @@ export class Space extends Scene {
             'E': false,
             'W': false,
         }
+
         this.rocket_transform = Mat4.identity();
         this.shield = false
         this.boost = false
@@ -237,12 +238,12 @@ export class Space extends Scene {
         }
     }
 
-    spawn_rocket(t, context, program_state, model_transform){
+    spawn_rocket(t, context, program_state){
         // Just placeholder to make rocket object
-        let rocket_body_transform = model_transform
-        let rocket_head_transform = model_transform
-        let rocket_fin_transform = model_transform
-        let rocket_hitbox_transform = model_transform
+        let rocket_body_transform = this.rocket_transform
+        let rocket_head_transform = this.rocket_transform
+        let rocket_fin_transform = this.rocket_transform
+        let rocket_hitbox_transform = this.rocket_transform
 
         rocket_body_transform = rocket_body_transform.times(Mat4.rotation(Math.PI / 2, 1, 0, 0))
                                     .times(Mat4.scale(1, 1, 3))
@@ -256,7 +257,7 @@ export class Space extends Scene {
             this.materials.rocket_extras.override({color:this.rocket_extras_colors[this.current_rocket]}))
         
         for(let i = 1; i < 8; i += 2){
-            rocket_fin_transform = model_transform.times(Mat4.rotation(i * (Math.PI / 4), 0, 1, 0))
+            rocket_fin_transform = this.rocket_transform.times(Mat4.rotation(i * (Math.PI / 4), 0, 1, 0))
                                     .times(Mat4.translation(0.8, -2, 0))
                                     .times(Mat4.scale(0.8, 1.8, 1))
             this.shapes.rocket_fin.draw(context, program_state, rocket_fin_transform,
@@ -524,7 +525,7 @@ export class Space extends Scene {
 
         // When collision detection becomes 
         if(this.boost){
-            mod = 1.5
+            mod = 1.8
         }
 
         if(this.rocket_motion['N']){
@@ -540,6 +541,9 @@ export class Space extends Scene {
             horizontal -= (PLAYER_SPEED * mod)
         }
         // ADD CHECKS FOR BLACK HOLE LATER
+        let black_hole_directions = this.black_hole_effect()
+        horizontal += black_hole_directions[0]
+        vertical += black_hole_directions[1]
 
         this.rocket_transform = this.rocket_transform.times(Mat4.translation(horizontal, vertical, 0))
     }
@@ -548,7 +552,61 @@ export class Space extends Scene {
         // Should activate boost for 10 seconds
             // INTEGRATE ONCE COLLISION DETECTIONS ARE READY
         this.boost = true;
-        setTimeout(() => {this.boost = false}, 10000)
+        setTimeout(() => {this.boost = false}, 5000)
+    }
+
+    distance(x, y){
+        let sum = 0.0
+        for(let i = 0; i < 3; i++){
+            sum += Math.pow((x[i][i] - y[i][i]), 2)
+        }
+        return Math.sqrt(sum)
+    }
+
+    black_hole_effect(){
+        for(let i = 0; i < 2; i++){
+            let hole_coords = (this.black_hole_positions[i])
+
+            let sum = 0.0
+            console.log(this.rocket_transform[0][3])
+            for(let j = 0; j < 2; j++){
+                sum += Math.pow((this.rocket_transform[j][3] - hole_coords[j][3]), 2)
+            }
+
+            // console.log(Math.sqrt(sum))
+            if(Math.sqrt(sum) < 15){
+                let v_diff = this.rocket_transform[1][3] - hole_coords[1][3]
+
+                let result = []
+                
+                if(this.rocket_transform[0][3] > hole_coords[0][3]){
+                    result.push(-0.04)
+                }
+                else{
+                    result.push(0.04)
+                }
+
+                if(this.rocket_transform[1][3] > hole_coords[1][3]){
+                    result.push(-0.04)
+                }
+                else{
+                    result.push(0.04)
+                }
+
+
+                return result
+            }
+        }
+
+        // for(x in this.black_hole_positions){
+        //     // let hole_values = this.to_vec4(x)
+        //     // let rocket_values = this.to_vec4(this.rocket_transform)
+        //     // if(distance(hole_values, rocket_values) < 500){
+        //     //     return [-0.2, -0.2]
+        //     // }
+        // }
+
+        return [0, 0]
     }
 
     shake_camera(t, program_state) {
@@ -577,6 +635,7 @@ export class Space extends Scene {
         // Draw the scene's buttons, setup their actions and keyboard shortcuts, and monitor live measurements.
         this.key_triggered_button("Change background color", ["b"], this.change_background);
         this.key_triggered_button("Change rocket color", ["c"], this.change_rocket_color);
+        this.key_triggered_button("TESTING BOOST", ["k"], this.activate_boost);
         this.key_triggered_button("Move rocket up", ["w"], 
                                     function() { this.rocket_motion['N'] = true},
                                     '#6E6460',
@@ -625,7 +684,7 @@ export class Space extends Scene {
         let model_transform = Mat4.identity()
         this.zoom_camera(t, program_state, {duration: 6, start_time: 2})
         this.spawn_objects(t, context, program_state, model_transform)
-        this.spawn_rocket(t, context, program_state, this.rocket_transform)
+        this.spawn_rocket(t, context, program_state)
         this.spawn_text(t, context, program_state, model_transform)
         this.move_rocket()
         this.spawn_healthbar(t, context, program_state, model_transform)

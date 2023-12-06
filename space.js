@@ -7,6 +7,8 @@ import { Text_Demo, Text_Line } from './examples/text-demo.js'
 const {
     Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Material, Scene, Texture
 } = tiny;
+
+const {Textured_Phong} = defs
 const PLAYER_SPEED = 0.12;
 const BLACK_HOLE_ATTRACT = 0.05
 const CAMERA = {
@@ -75,10 +77,16 @@ export class Space extends Scene {
                 {ambient: 0.8, diffusivity: 0.5, specularity: 0.2, color: hex_color("#ffffff")}),
             black_hole: new Material(new shaders.Ring_Shader(),
                 {ambient: 0.8, diffusivity: 0.5, specularity: 0.3, radius: 5.0}),
-            earth: new Material(new defs.Phong_Shader(),
-                {ambient: 0.5, diffusivity: 0.8, specularity: 0.5, color: hex_color("#023ca7")}),
-            mars: new Material(new defs.Phong_Shader(),
-                {ambient: 0.5, diffusivity: 0.8, specularity: 0.5, color: hex_color("#a43f2f")}),
+            earth: new Material(new Textured_Phong(), {
+                    color: hex_color("#000000"),
+                    ambient: 1,
+                    texture: new Texture("/assets/earth.jpg", "LINEAR_MIPMAP_LINEAR")
+                }),
+            mars: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"),
+                ambient: 1,
+                texture: new Texture("/assets/mars.jpeg", "LINEAR_MIPMAP_LINEAR")
+            }),
             // rocket material colors don't matter because they will be overridden in display()
             rocket_body: new Material(new defs.Phong_Shader(),
                 {ambient: 0.8, diffusivity: 0.5, specularity: 0, color: hex_color("#000000")}),
@@ -581,7 +589,7 @@ export class Space extends Scene {
             let hole_coords = (this.black_hole_positions[i])
 
             let sum = 0.0
-            console.log(this.rocket_transform[0][3])
+            // console.log(this.rocket_transform[0][3])
             for(let j = 0; j < 2; j++){
                 sum += Math.pow((this.rocket_transform[j][3] - hole_coords[j][3]), 2)
             }

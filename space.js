@@ -7,7 +7,7 @@ import { Text_Demo, Text_Line } from './examples/text-demo.js'
 const {
     Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Material, Scene, Texture
 } = tiny;
-let PLAYER_SPEED = 0.12;
+const PLAYER_SPEED = 0.12;
 const CAMERA = {
     INIT_Z: 10,
     END_Z: 50,
@@ -140,6 +140,8 @@ export class Space extends Scene {
             'W': false,
         }
         this.rocket_transform = Mat4.identity();
+        this.shield = false
+        this.boost = false
     }
 
 
@@ -518,22 +520,35 @@ export class Space extends Scene {
         // takes sum of all movements affecting rocket and moves accordingly
         let vertical = 0
         let horizontal = 0
+        let mod = 1.0
+
+        // When collision detection becomes 
+        if(this.boost){
+            mod = 1.5
+        }
 
         if(this.rocket_motion['N']){
-            vertical += PLAYER_SPEED
+            vertical += (PLAYER_SPEED * mod)
         }
         if(this.rocket_motion['S']){
-            vertical -= PLAYER_SPEED
+            vertical -= (PLAYER_SPEED * mod)
         }
         if(this.rocket_motion['E']){
-            horizontal += PLAYER_SPEED
+            horizontal += (PLAYER_SPEED * mod)
         }
         if(this.rocket_motion['W']){
-            horizontal -= PLAYER_SPEED
+            horizontal -= (PLAYER_SPEED * mod)
         }
         // ADD CHECKS FOR BLACK HOLE LATER
 
         this.rocket_transform = this.rocket_transform.times(Mat4.translation(horizontal, vertical, 0))
+    }
+
+    activate_boost(){
+        // Should activate boost for 10 seconds
+            // INTEGRATE ONCE COLLISION DETECTIONS ARE READY
+        this.boost = true;
+        setTimeout(() => {this.boost = false}, 10000)
     }
 
     shake_camera(t, program_state) {

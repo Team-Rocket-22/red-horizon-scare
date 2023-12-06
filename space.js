@@ -8,6 +8,7 @@ const {
     Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Material, Scene, Texture
 } = tiny;
 const PLAYER_SPEED = 0.12;
+const BLACK_HOLE_ATTRACT = 0.05
 const CAMERA = {
     INIT_Z: 10,
     END_Z: 50,
@@ -37,6 +38,7 @@ export class Space extends Scene {
             rocket_head: new defs.Closed_Cone(20, 20),
             rocket_fin: new defs.Triangle(),
             rocket_hitbox: new defs.Cube(),
+            rocket_bubble: new defs.Torus(15, 15),
 
             text_test: new Text_Line(20),
             alien_ship_body: new defs.Subdivision_Sphere(4),
@@ -54,6 +56,8 @@ export class Space extends Scene {
             heart: new Material(new defs.Phong_Shader(),
                 {ambient: 0.8, diffusivity: 0.5, specularity: 0.2, color: hex_color("#880808")}),
             shield: new Material(new defs.Phong_Shader(),
+                {ambient: 0.4, diffusivity: 0.8, specularity: 0.8, color: hex_color("#08b8e8")}),
+            bubble: new Material(new defs.Bubble_Shader(),
                 {ambient: 0.4, diffusivity: 0.8, specularity: 0.8, color: hex_color("#08b8e8")}),
             speed_up: new Material(new defs.Phong_Shader(),
                 {ambient: 0.8, diffusivity: 0.8, specularity: 0.2, color: hex_color("#ffb81c")}),
@@ -141,6 +145,7 @@ export class Space extends Scene {
         }
 
         this.rocket_transform = Mat4.identity();
+        // These power up values must be manipulated when collecting powerups
         this.shield = false
         this.boost = false
     }
@@ -244,6 +249,7 @@ export class Space extends Scene {
         let rocket_head_transform = this.rocket_transform
         let rocket_fin_transform = this.rocket_transform
         let rocket_hitbox_transform = this.rocket_transform
+        let rocket_bubble_transform = this.rocket_transform
 
         rocket_body_transform = rocket_body_transform.times(Mat4.rotation(Math.PI / 2, 1, 0, 0))
                                     .times(Mat4.scale(1, 1, 3))
@@ -262,6 +268,12 @@ export class Space extends Scene {
                                     .times(Mat4.scale(0.8, 1.8, 1))
             this.shapes.rocket_fin.draw(context, program_state, rocket_fin_transform,
                 this.materials.rocket_extras.override({color:this.rocket_extras_colors[this.current_rocket]}))
+        }
+
+        if(this.shield){
+            rocket_bubble_transform = rocket_bubble_transform.times(Mat4.scale(2, 3, 0.5))
+            this.shapes.rocket_bubble.draw(context, program_state, rocket_bubble_transform,
+                this.materials.shield)
         }
 
         rocket_hitbox_transform = rocket_hitbox_transform.times(Mat4.scale(1.15, 2.25, 1.15)).times(Mat4.translation(0, 0.15, 0))
@@ -564,6 +576,7 @@ export class Space extends Scene {
     }
 
     black_hole_effect(){
+        let result = [0, 0]
         for(let i = 0; i < 2; i++){
             let hole_coords = (this.black_hole_positions[i])
 
@@ -574,39 +587,24 @@ export class Space extends Scene {
             }
 
             // console.log(Math.sqrt(sum))
-            if(Math.sqrt(sum) < 15){
-                let v_diff = this.rocket_transform[1][3] - hole_coords[1][3]
-
-                let result = []
-                
+            if(Math.sqrt(sum) < 15){                
                 if(this.rocket_transform[0][3] > hole_coords[0][3]){
-                    result.push(-0.04)
+                    result[0] -= BLACK_HOLE_ATTRACT
                 }
                 else{
-                    result.push(0.04)
+                    result[0] += BLACK_HOLE_ATTRACT
                 }
 
                 if(this.rocket_transform[1][3] > hole_coords[1][3]){
-                    result.push(-0.04)
+                    result[1] -= BLACK_HOLE_ATTRACT
                 }
                 else{
-                    result.push(0.04)
+                    result[1] += BLACK_HOLE_ATTRACT
                 }
-
-
-                return result
             }
         }
 
-        // for(x in this.black_hole_positions){
-        //     // let hole_values = this.to_vec4(x)
-        //     // let rocket_values = this.to_vec4(this.rocket_transform)
-        //     // if(distance(hole_values, rocket_values) < 500){
-        //     //     return [-0.2, -0.2]
-        //     // }
-        // }
-
-        return [0, 0]
+        return result
     }
 
     shake_camera(t, program_state) {

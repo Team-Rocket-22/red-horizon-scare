@@ -170,7 +170,7 @@ export class Space extends Scene {
     asteroid_belt(t, context, program_state, model_transform) {
         for (let i = 0; i < this.asteroids.length; i++) {
             let ast_transform = model_transform
-            ast_transform = ast_transform.times(Mat4.rotation(this.asteroids[i].angle, 0, 1, 0)).times(Mat4.translation(this.asteroids[i].xPos, 120 + (i * 5), 0)).times(Mat4.scale(1, 1.5, 1)).times(Mat4.translation(0, (-t * 7), 0))
+            ast_transform = ast_transform.times(Mat4.rotation(this.asteroids[i].angle, 0, 1, 0)).times(Mat4.translation(this.asteroids[i].xPos, 150 + (i * 5), 0)).times(Mat4.scale(1, 1.5, 1)).times(Mat4.translation(0, (-(t%100) * 7), 0))
             this.asteroids[i].draw(context, program_state, ast_transform, this.materials.asteroid)
         }
     }
@@ -483,7 +483,7 @@ export class Space extends Scene {
             this.alien_attack(t, 100, context, program_state, model_transform)
         }
         if ((t >= 110 && t <= 120)) {
-            this.alien_attack(t, 110, context, program_state, model_transform)
+            this.alien_attack(t, 100, context, program_state, model_transform)
         }
     }
 

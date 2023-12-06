@@ -167,13 +167,12 @@ export class Space extends Scene {
         }
     }
 
-    alien_attack(t, context, program_state, model_transform) {
-        
+    alien_attack(t, spawn, context, program_state, model_transform) {
         let aliens = []
         for (let i = 0; i < this.alien_positions.length; i++) {
             aliens[i] = model_transform
             aliens[i] = aliens[i].times(Mat4.translation(this.alien_positions[i], 30 + (i * 5), 0)).times(Mat4.scale(1, 1.5, 1)).times(Mat4.translation(0, -(t % 10) * 7, 0))
-            this.spawn_alienship(t, context, program_state, aliens[i])
+            this.spawn_alienship(t, spawn, context, program_state, aliens[i])
         }
     }
 
@@ -266,11 +265,11 @@ export class Space extends Scene {
         this.shapes.rocket_hitbox.draw(context, program_state, rocket_hitbox_transform, this.materials.rocket_hitbox)
     }
 
-    shoot_laser(t, context, program_state, model_transform) {
+    shoot_laser(t, spawn, context, program_state, model_transform) {
         const downward_speed = 9;
             
         const animate_laser = () => {
-            let elapsed_time = t - 20;
+            let elapsed_time = t - spawn;
             const downward_distance = downward_speed * elapsed_time
             model_transform = model_transform.times(Mat4.translation( 0, -downward_distance, 0))
             const laser_transform = model_transform
@@ -282,15 +281,14 @@ export class Space extends Scene {
         animate_laser(t)
     }
 
-    spawn_alienship(t, context, program_state, model_transform) {
-
+    spawn_alienship(t, spawn, context, program_state, model_transform) {
         const downward_speed = 12;
 
         const animate_ship = () => {
             // Calculate time elapsed since the ship was spawned
             // const elapsed_time = t - spawn;
             // let elapsed_time = t + spawn_time - spawn_time;
-            const downward_distance = downward_speed * (t - 25)
+            const downward_distance = downward_speed * (t - (spawn + 5))
             model_transform = model_transform.times(Mat4.translation( 0, -downward_distance, 0))
 
             const alien_ship_transform = model_transform
@@ -314,8 +312,8 @@ export class Space extends Scene {
             
             this.shapes.alien_ship_guns.draw(context, program_state, gun_transform_left, this.materials.alien_ship_guns);
             this.shapes.alien_ship_guns.draw(context, program_state, gun_transform_right, this.materials.alien_ship_guns);
-            this.shoot_laser(t, context, program_state, gun_transform_left)
-            this.shoot_laser(t, context, program_state, gun_transform_right)
+            this.shoot_laser(t, spawn, context, program_state, gun_transform_left)
+            this.shoot_laser(t, spawn, context, program_state, gun_transform_right)
         }
 
         animate_ship()
@@ -325,7 +323,7 @@ export class Space extends Scene {
     spawn_satellite_left(t, context, program_state, model_transform) {
         const speed = 12
         let satellite_transform = model_transform;
-        satellite_transform = satellite_transform.times(Mat4.translation(speed * (t - 30), 0, 0)).times(Mat4.rotation(Math.PI / 2, 1, 0, 0)).times(Mat4.scale(.5, .5, 2));
+        satellite_transform = satellite_transform.times(Mat4.translation(speed * t, 0, 0)).times(Mat4.rotation(Math.PI / 2, 1, 0, 0)).times(Mat4.scale(.5, .5, 2));
         this.shapes.satellite.draw(context, program_state, satellite_transform, this.materials.satellite);
 
         let solar1_transform = satellite_transform;
@@ -345,7 +343,7 @@ export class Space extends Scene {
     spawn_satellite_right(t, context, program_state, model_transform) {
         const speed = 12
         let satellite_transform = model_transform;
-        satellite_transform = satellite_transform.times(Mat4.translation(-speed * (t - 40), 0, 0)).times(Mat4.rotation(Math.PI / 2, 1, 0, 0)).times(Mat4.scale(.5, .5, 2));
+        satellite_transform = satellite_transform.times(Mat4.translation(-speed * t, 0, 0)).times(Mat4.rotation(Math.PI / 2, 1, 0, 0)).times(Mat4.scale(.5, .5, 2));
         this.shapes.satellite.draw(context, program_state, satellite_transform, this.materials.satellite);
 
         let solar1_transform = satellite_transform;
@@ -363,8 +361,8 @@ export class Space extends Scene {
     }
 
     spawn_speed_up(t, context, program_state, model_transform) {
-        if (t <= 18) {
-            model_transform = Mat4.identity().times(Mat4.translation(0, -3 * t, 0)).times(model_transform);
+        if (t > 40 && t <= 58) {
+            model_transform = Mat4.identity().times(Mat4.translation(0, -3 * (t - 40), 0)).times(model_transform);
             this.shapes.speed_up.draw(context, program_state, model_transform, this.materials.speed_up);
             model_transform = Mat4.identity().times(Mat4.translation(0, -1, 0)).times(model_transform);
             this.shapes.speed_up.draw(context, program_state, model_transform, this.materials.speed_up);
@@ -374,7 +372,6 @@ export class Space extends Scene {
         return model_transform;
     }
 
-    // TODO: add texture to shield bubble
     spawn_shield(t, context, program_state, model_transform) {
         if (t >= 3 && t <= 16) {
             model_transform = Mat4.identity().times(Mat4.translation(0, -5 * (t - 3), 0)).times(model_transform);
@@ -395,11 +392,11 @@ export class Space extends Scene {
     }
 
     arrive_earth(t, context, program_state, model_transform) {
-        if (t > 38 && t <= 52) {
-            model_transform = model_transform.times(Mat4.translation(0, 0.2 * (t - 38), 0));
+        if (t > 106 && t <= 120) {
+            model_transform = model_transform.times(Mat4.translation(0, 0.2 * (t - 106), 0));
             this.shapes.earth.draw(context, program_state, model_transform, this.materials.earth);
         }
-        else if (t > 52) {
+        else if (t > 120) {
             model_transform = model_transform.times(Mat4.translation(0, 2.8, 0));
             this.shapes.earth.draw(context, program_state, model_transform, this.materials.earth);
         }
@@ -407,16 +404,16 @@ export class Space extends Scene {
     }
 
     spawn_mars(t, context, program_state, model_transform) {
-        if (t >= 18 && t <= 24) {
-            model_transform = model_transform.times(Mat4.translation(0, -0.2 * (t - 18), 0));
+        if (t >= 48 && t <= 54) {
+            model_transform = model_transform.times(Mat4.translation(0, -0.2 * (t - 48), 0));
             this.shapes.mars.draw(context, program_state, model_transform, this.materials.mars);
         }
-        else if (t > 24 && t <= 30) {
+        else if (t > 54 && t <= 60) {
             model_transform = model_transform.times(Mat4.translation(0, -1.2, 0));
             this.shapes.mars.draw(context, program_state, model_transform, this.materials.mars);
         }
-        else if (t > 30 && t <= 40) {
-            model_transform = model_transform.times(Mat4.translation(0, 0.2 * (t - 30), 0)).times(Mat4.translation(0, -1.2, 0));
+        else if (t > 60 && t <= 70) {
+            model_transform = model_transform.times(Mat4.translation(0, 0.2 * (t - 60), 0)).times(Mat4.translation(0, -1.2, 0));
             this.shapes.mars.draw(context, program_state, model_transform, this.materials.mars);
         }
         return model_transform
@@ -441,35 +438,79 @@ export class Space extends Scene {
         if (t > 5) {
             this.spawn_black_hole(t - 5, context, program_state, model_transform)
         }
+
         if ((t >= 10 && t <= 25)) {
             this.asteroid_belt(t, context, program_state, model_transform)
         }
-        if ((t >= 20 && t <= 30)) {
-            this.alien_attack(t, context, program_state, model_transform)
-        }
 
         if ((t >= 30 && t <= 40)) {
-            this.satellite_hit_left(t, context, program_state, model_transform)
+            this.satellite_hit_left(t - 30, context, program_state, model_transform)
+        }
+        if ((t >= 40 && t <= 50)) {
+            this.satellite_hit_right(t - 40, context, program_state, model_transform)
         }
 
-        if ((t >= 40 && t <= 50)) {
-            this.satellite_hit_right(t, context, program_state, model_transform)
+        if ((t >= 50 && t <= 60)) {
+            this.alien_attack(t, 50, context, program_state, model_transform)
+        }
+        if ((t >= 60 && t <= 70)) {
+            this.alien_attack(t, 60, context, program_state, model_transform)
+        }
+        
+        if ((t >= 75 && t <= 85)) {
+            this.satellite_hit_right(t - 75, context, program_state, model_transform)
+        }
+        if ((t >= 85 && t <= 95)) {
+            this.satellite_hit_left(t - 85, context, program_state, model_transform)
+        }
+
+        if ((t >= 100 && t <= 110)) {
+            this.alien_attack(t, 100, context, program_state, model_transform)
+        }
+        if ((t >= 110 && t <= 120)) {
+            this.alien_attack(t, 110, context, program_state, model_transform)
         }
     }
 
     spawn_text(t, context, program_state, model_transform) {
         // spawn text
         if ((t >= 0 && t <= 11.5)) {
-            model_transform = model_transform.times(Mat4.translation(-11, 10, -20))
+            let model_transform_1 = model_transform.times(Mat4.translation(-12, 10, -20))
             const text_1 = "Red Horizon Scare"
             this.shapes.text_test.set_string(text_1, context.context)
-            this.shapes.text_test.draw(context, program_state, model_transform, this.materials.text_test)
+            this.shapes.text_test.draw(context, program_state, model_transform_1, this.materials.text_test)
 
             // transform the text downwards
-            model_transform = model_transform.times(Mat4.translation(3, -5, 0))
+            let model_transform_2 = model_transform_1.times(Mat4.translation(3, -4, 0))
             const text_2 = "Don't Get Hit"
             this.shapes.text_test.set_string(text_2, context.context)
-            this.shapes.text_test.draw(context, program_state, model_transform, this.materials.text_test)
+            this.shapes.text_test.draw(context, program_state, model_transform_2, this.materials.text_test)
+
+            // transform the text downwards
+            let model_transform_3 = model_transform_2.times(Mat4.translation(-3, -4, 0))
+            const text_3 = "Collect Power-Ups"
+            this.shapes.text_test.set_string(text_3, context.context)
+            this.shapes.text_test.draw(context, program_state, model_transform_3, this.materials.text_test)
+        }
+
+        if ((t >= 55 && t <= 60)) {
+            let model_transform_4 = model_transform.times(Mat4.translation(-4, 0, -20))
+            const text_4 = "Danger!"
+            this.shapes.text_test.set_string(text_4, context.context)
+            this.shapes.text_test.draw(context, program_state, model_transform_4, this.materials.text_test)
+
+            // transform the text downwards
+            let model_transform_5 = model_transform_4.times(Mat4.translation(1, -5, 0))
+            const text_5 = "Abort."
+            this.shapes.text_test.set_string(text_5, context.context)
+            this.shapes.text_test.draw(context, program_state, model_transform_5, this.materials.text_test)
+        }
+
+        if ((t >= 120)) {
+            let model_transform_6 = model_transform.times(Mat4.translation(-12, 10, -20))
+            const text_6 = "You Made It Home!"
+            this.shapes.text_test.set_string(text_6, context.context)
+            this.shapes.text_test.draw(context, program_state, model_transform_6, this.materials.text_test)
         }
     }
 
@@ -557,6 +598,15 @@ export class Space extends Scene {
         const light_position = vec4(5, -2, 0, 1);
         program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 10**10)];
 
+        program_state.set_camera(this.stay_camera_location);
+
+        // if (t >= 15 && t <= 15.5) {
+        //     this.shake_camera(t, program_state)
+        // }
+        // else {
+        //     program_state.set_camera(this.stay_camera_location);
+        // }
+
         let model_transform = Mat4.identity()
         this.zoom_camera(t, program_state, {duration: 6, start_time: 2})
         this.spawn_objects(t, context, program_state, model_transform)
@@ -564,22 +614,14 @@ export class Space extends Scene {
         this.spawn_text(t, context, program_state, model_transform)
         this.move_rocket()
         this.spawn_healthbar(t, context, program_state, model_transform)
-        
-        if (t >= 15 && t <= 15.5) {
-            this.shake_camera(t, program_state)
-        }
-        else {
-            program_state.set_camera(this.stay_camera_location);
-        }
 
-        let model_transform_speed_up_left = Mat4.identity().times(Mat4.translation(-4, 20, 0)).times(Mat4.translation(-0.335, 0, 0)).times(Mat4.rotation(Math.PI / 6, 0, 0, 1)).times(Mat4.scale(6, 2, 1)).times(Mat4.scale(0.08, 0.08, 0.08));
+        let model_transform_speed_up_left = Mat4.identity().times(Mat4.translation(-4, 25, 0)).times(Mat4.translation(-0.335, 0, 0)).times(Mat4.rotation(Math.PI / 6, 0, 0, 1)).times(Mat4.scale(6, 2, 1)).times(Mat4.scale(0.08, 0.08, 0.08));
         model_transform_speed_up_left = this.spawn_speed_up(t, context, program_state, model_transform_speed_up_left)
-        let model_transform_speed_up_right = Mat4.identity().times(Mat4.translation(-4, 20, 0)).times(Mat4.translation(0.335, 0, 0)).times(Mat4.rotation(-Math.PI / 6, 0, 0, 1)).times(Mat4.scale(6, 2, 1)).times(Mat4.scale(0.08, 0.08, 0.08));
+        let model_transform_speed_up_right = Mat4.identity().times(Mat4.translation(-4, 25, 0)).times(Mat4.translation(0.335, 0, 0)).times(Mat4.rotation(-Math.PI / 6, 0, 0, 1)).times(Mat4.scale(6, 2, 1)).times(Mat4.scale(0.08, 0.08, 0.08));
         model_transform_speed_up_right = this.spawn_speed_up(t, context, program_state, model_transform_speed_up_right)
 
         let model_transform_shield = Mat4.identity().times(Mat4.translation(6, 20, 0)).times(Mat4.scale(1.5, 1.5, 1.5));
         model_transform_shield = this.spawn_shield(t, context, program_state, model_transform_shield)
-
 
         let model_transform_e_leave = Mat4.identity().times(Mat4.translation(0, -30, -15)).times(Mat4.scale(20, 20, 20));
         model_transform_e_leave = this.leave_earth(t, context, program_state, model_transform_e_leave);

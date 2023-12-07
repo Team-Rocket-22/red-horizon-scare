@@ -654,7 +654,7 @@ export class Space extends Scene {
         this.spawn_text(t, context, program_state, model_transform)
         this.move_rocket()
         this.spawn_healthbar(t, context, program_state, model_transform)
-
+  
         this.detect_collisions(t, context, program_state, hitbox, this.black_hole_positions, "blackhole", 4);  // we can change max_dist accordingly
 
         let model_transform_speed_up_left = Mat4.identity().times(Mat4.translation(-4, 25, 0)).times(Mat4.translation(-0.335, 0, 0)).times(Mat4.rotation(Math.PI / 6, 0, 0, 1)).times(Mat4.scale(6, 2, 1)).times(Mat4.scale(0.08, 0.08, 0.08));

@@ -175,6 +175,10 @@ export class Space extends Scene {
         this.hp += amount
     }
 
+    set_hp(amount) {
+        this.hp = amount
+    }
+
     // TODO: number of asteroids, asteroid speed? change based on level?
     asteroid_belt(t, context, program_state, model_transform) {
         for (let i = 0; i < this.asteroids.length; i++) {
@@ -287,6 +291,42 @@ export class Space extends Scene {
 
         rocket_hitbox_transform = rocket_hitbox_transform.times(Mat4.scale(1.15, 2.25, 1.15)).times(Mat4.translation(0, 0.15, 0))
         this.shapes.rocket_hitbox.draw(context, program_state, rocket_hitbox_transform, this.materials.rocket_hitbox)
+
+        return rocket_hitbox_transform;
+    }
+
+    detect_collisions(t, context, program_state, hitbox_transform, object_list, type, max_dist) {
+        for (let i = 0; i < object_list.length; i++) {
+            if (this.compute_distance(hitbox_transform, object_list[i], max_dist)) {
+                switch(type) {
+                    case("blackhole"):
+                        console.log("Died in blackhole")
+                        break;
+                    default:
+                        console.log("close")
+                }
+                // console.log("not close")
+            }
+        }
+    }
+
+    compute_distance(hitbox_transform, object_transform, max_dist) {
+
+        let hitbox_x = hitbox_transform[0][0] + hitbox_transform[0][3]
+        let hitbox_y = hitbox_transform[1][0] + hitbox_transform[1][3]
+
+        let object_x = object_transform[0][0] + object_transform[0][3]
+        let object_y = object_transform[1][0] + object_transform[1][3]
+
+        let distance_x = object_x - hitbox_x
+        let distance_y = object_y - hitbox_y
+        let total_distance = Math.hypot(distance_x, distance_y);
+
+        if (total_distance > max_dist) {
+            return false
+        } else {
+            return true
+        }
     }
 
     shoot_laser(t, spawn, context, program_state, model_transform) {
@@ -699,10 +739,12 @@ export class Space extends Scene {
         let model_transform = Mat4.identity()
         this.zoom_camera(t, program_state, {duration: 6, start_time: 2})
         this.spawn_objects(t, context, program_state, model_transform)
-        this.spawn_rocket(t, context, program_state)
+        let hitbox = this.spawn_rocket(t, context, program_state)
         this.spawn_text(t, context, program_state, model_transform)
         this.move_rocket()
         this.spawn_healthbar(t, context, program_state, model_transform)
+  
+        this.detect_collisions(t, context, program_state, hitbox, this.black_hole_positions, "blackhole", 4);  // we can change max_dist accordingly
 
         let model_transform_speed_up_left = Mat4.identity().times(Mat4.translation(-4, 25, 0)).times(Mat4.translation(-0.335, 0, 0)).times(Mat4.rotation(Math.PI / 6, 0, 0, 1)).times(Mat4.scale(6, 2, 1)).times(Mat4.scale(0.08, 0.08, 0.08));
         model_transform_speed_up_left = this.spawn_speed_up(t, context, program_state, model_transform_speed_up_left)

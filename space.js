@@ -156,6 +156,7 @@ export class Space extends Scene {
         // These power up values must be manipulated when collecting powerups
         this.shield = false
         this.boost = false
+        this.flipped = false
     }
 
 
@@ -517,6 +518,10 @@ export class Space extends Scene {
         }
 
         if ((t >= 55 && t <= 60)) {
+            if(!this.flipped){
+                this.flip_rocket()
+            }
+            
             let model_transform_4 = model_transform.times(Mat4.translation(-4, 0, -20))
             const text_4 = "Danger!"
             this.shapes.text_test.set_string(text_4, context.context)
@@ -541,29 +546,34 @@ export class Space extends Scene {
         // takes sum of all movements affecting rocket and moves accordingly
         let vertical = 0
         let horizontal = 0
-        let mod = 1.0
+        let speed_mod = 1.0
+        let flip_mod = 1.0
 
         // When collision detection becomes 
         if(this.boost){
-            mod = 1.8
+            speed_mod = 1.8
+        }
+        
+        if(this.flipped){
+            flip_mod = -1.0
         }
 
         if(this.rocket_motion['N']){
-            vertical += (PLAYER_SPEED * mod)
+            vertical += (PLAYER_SPEED * speed_mod * flip_mod)
         }
         if(this.rocket_motion['S']){
-            vertical -= (PLAYER_SPEED * mod)
+            vertical -= (PLAYER_SPEED * speed_mod * flip_mod)
         }
         if(this.rocket_motion['E']){
-            horizontal += (PLAYER_SPEED * mod)
+            horizontal += (PLAYER_SPEED * speed_mod)
         }
         if(this.rocket_motion['W']){
-            horizontal -= (PLAYER_SPEED * mod)
+            horizontal -= (PLAYER_SPEED * speed_mod)
         }
         // ADD CHECKS FOR BLACK HOLE LATER
         let black_hole_directions = this.black_hole_effect()
         horizontal += black_hole_directions[0]
-        vertical += black_hole_directions[1]
+        vertical += (black_hole_directions[1] * flip_mod)
 
         this.rocket_transform = this.rocket_transform.times(Mat4.translation(horizontal, vertical, 0))
     }
@@ -575,12 +585,12 @@ export class Space extends Scene {
         setTimeout(() => {this.boost = false}, 5000)
     }
 
-    distance(x, y){
-        let sum = 0.0
-        for(let i = 0; i < 3; i++){
-            sum += Math.pow((x[i][i] - y[i][i]), 2)
-        }
-        return Math.sqrt(sum)
+    flip_rocket(){
+        this.flipped = true
+        let y_coord = this.rocket_transform[1][3]
+        this.rocket_transform = Mat4.identity().times(Mat4.scale(1, -1, 1))
+                                    .times(Mat4.translation(0, -2 * y_coord, 0))
+                                    .times(this.rocket_transform)
     }
 
     black_hole_effect(){
@@ -641,7 +651,6 @@ export class Space extends Scene {
         // Draw the scene's buttons, setup their actions and keyboard shortcuts, and monitor live measurements.
         this.key_triggered_button("Change background color", ["b"], this.change_background);
         this.key_triggered_button("Change rocket color", ["c"], this.change_rocket_color);
-        this.key_triggered_button("TESTING BOOST", ["k"], this.activate_boost);
         this.key_triggered_button("Move rocket up", ["w"], 
                                     function() { this.rocket_motion['N'] = true},
                                     '#6E6460',

@@ -7,7 +7,10 @@ import { Text_Demo, Text_Line } from './examples/text-demo.js'
 const {
     Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Material, Scene, Texture
 } = tiny;
-let PLAYER_SPEED = 0.12;
+
+const {Textured_Phong} = defs
+const PLAYER_SPEED = 0.12;
+const BLACK_HOLE_ATTRACT = 0.05
 const CAMERA = {
     INIT_Z: 10,
     END_Z: 50,
@@ -37,6 +40,7 @@ export class Space extends Scene {
             rocket_head: new defs.Closed_Cone(20, 20),
             rocket_fin: new defs.Triangle(),
             rocket_hitbox: new defs.Cube(),
+            rocket_bubble: new defs.Torus(15, 15),
 
             text_test: new Text_Line(20),
             alien_ship_body: new defs.Subdivision_Sphere(4),
@@ -55,6 +59,8 @@ export class Space extends Scene {
                 {ambient: 0.8, diffusivity: 0.5, specularity: 0.2, color: hex_color("#880808")}),
             shield: new Material(new defs.Phong_Shader(),
                 {ambient: 0.4, diffusivity: 0.8, specularity: 0.8, color: hex_color("#08b8e8")}),
+            bubble: new Material(new defs.Bubble_Shader(),
+                {ambient: 0.4, diffusivity: 0.8, specularity: 0.8, color: hex_color("#08b8e8")}),
             speed_up: new Material(new defs.Phong_Shader(),
                 {ambient: 0.8, diffusivity: 0.8, specularity: 0.2, color: hex_color("#ffb81c")}),
             face: new Material(new defs.Phong_Shader(),
@@ -71,10 +77,16 @@ export class Space extends Scene {
                 {ambient: 0.8, diffusivity: 0.5, specularity: 0.2, color: hex_color("#ffffff")}),
             black_hole: new Material(new shaders.Ring_Shader(),
                 {ambient: 0.8, diffusivity: 0.5, specularity: 0.3, radius: 5.0}),
-            earth: new Material(new defs.Phong_Shader(),
-                {ambient: 0.5, diffusivity: 0.8, specularity: 0.5, color: hex_color("#023ca7")}),
-            mars: new Material(new defs.Phong_Shader(),
-                {ambient: 0.5, diffusivity: 0.8, specularity: 0.5, color: hex_color("#a43f2f")}),
+            earth: new Material(new Textured_Phong(), {
+                    color: hex_color("#000000"),
+                    ambient: 1,
+                    texture: new Texture("/assets/earth.jpg", "LINEAR_MIPMAP_LINEAR")
+                }),
+            mars: new Material(new Textured_Phong(), {
+                color: hex_color("#000000"),
+                ambient: 1,
+                texture: new Texture("/assets/mars.jpeg", "LINEAR_MIPMAP_LINEAR")
+            }),
             // rocket material colors don't matter because they will be overridden in display()
             rocket_body: new Material(new defs.Phong_Shader(),
                 {ambient: 0.8, diffusivity: 0.5, specularity: 0, color: hex_color("#000000")}),
@@ -139,7 +151,12 @@ export class Space extends Scene {
             'E': false,
             'W': false,
         }
+
         this.rocket_transform = Mat4.identity();
+        // These power up values must be manipulated when collecting powerups
+        this.shield = false
+        this.boost = false
+        this.flipped = false
     }
 
 
@@ -166,7 +183,7 @@ export class Space extends Scene {
     asteroid_belt(t, context, program_state, model_transform) {
         for (let i = 0; i < this.asteroids.length; i++) {
             let ast_transform = model_transform
-            ast_transform = ast_transform.times(Mat4.rotation(this.asteroids[i].angle, 0, 1, 0)).times(Mat4.translation(this.asteroids[i].xPos, 120 + (i * 5), 0)).times(Mat4.scale(1, 1.5, 1)).times(Mat4.translation(0, (-t * 7), 0))
+            ast_transform = ast_transform.times(Mat4.rotation(this.asteroids[i].angle, 0, 1, 0)).times(Mat4.translation(this.asteroids[i].xPos, 150 + (i * 5), 0)).times(Mat4.scale(1, 1.5, 1)).times(Mat4.translation(0, (-(t%100) * 7), 0))
             this.asteroids[i].draw(context, program_state, ast_transform, this.materials.asteroid)
         }
     }
@@ -239,12 +256,13 @@ export class Space extends Scene {
         }
     }
 
-    spawn_rocket(t, context, program_state, model_transform){
+    spawn_rocket(t, context, program_state){
         // Just placeholder to make rocket object
-        let rocket_body_transform = model_transform
-        let rocket_head_transform = model_transform
-        let rocket_fin_transform = model_transform
-        let rocket_hitbox_transform = model_transform
+        let rocket_body_transform = this.rocket_transform
+        let rocket_head_transform = this.rocket_transform
+        let rocket_fin_transform = this.rocket_transform
+        let rocket_hitbox_transform = this.rocket_transform
+        let rocket_bubble_transform = this.rocket_transform
 
         rocket_body_transform = rocket_body_transform.times(Mat4.rotation(Math.PI / 2, 1, 0, 0))
                                     .times(Mat4.scale(1, 1, 3))
@@ -258,11 +276,17 @@ export class Space extends Scene {
             this.materials.rocket_extras.override({color:this.rocket_extras_colors[this.current_rocket]}))
         
         for(let i = 1; i < 8; i += 2){
-            rocket_fin_transform = model_transform.times(Mat4.rotation(i * (Math.PI / 4), 0, 1, 0))
+            rocket_fin_transform = this.rocket_transform.times(Mat4.rotation(i * (Math.PI / 4), 0, 1, 0))
                                     .times(Mat4.translation(0.8, -2, 0))
                                     .times(Mat4.scale(0.8, 1.8, 1))
             this.shapes.rocket_fin.draw(context, program_state, rocket_fin_transform,
                 this.materials.rocket_extras.override({color:this.rocket_extras_colors[this.current_rocket]}))
+        }
+
+        if(this.shield){
+            rocket_bubble_transform = rocket_bubble_transform.times(Mat4.scale(2, 3, 0.5))
+            this.shapes.rocket_bubble.draw(context, program_state, rocket_bubble_transform,
+                this.materials.shield)
         }
 
         rocket_hitbox_transform = rocket_hitbox_transform.times(Mat4.scale(1.15, 2.25, 1.15)).times(Mat4.translation(0, 0.15, 0))
@@ -508,7 +532,7 @@ export class Space extends Scene {
             this.alien_attack(t, 100, context, program_state, model_transform)
         }
         if ((t >= 110 && t <= 120)) {
-            this.alien_attack(t, 110, context, program_state, model_transform)
+            this.alien_attack(t, 100, context, program_state, model_transform)
         }
     }
 
@@ -534,6 +558,10 @@ export class Space extends Scene {
         }
 
         if ((t >= 55 && t <= 60)) {
+            if(!this.flipped){
+                this.flip_rocket()
+            }
+            
             let model_transform_4 = model_transform.times(Mat4.translation(-4, 0, -20))
             const text_4 = "Danger!"
             this.shapes.text_test.set_string(text_4, context.context)
@@ -558,22 +586,83 @@ export class Space extends Scene {
         // takes sum of all movements affecting rocket and moves accordingly
         let vertical = 0
         let horizontal = 0
+        let speed_mod = 1.0
+        let flip_mod = 1.0
+
+        // When collision detection becomes 
+        if(this.boost){
+            speed_mod = 1.8
+        }
+        
+        if(this.flipped){
+            flip_mod = -1.0
+        }
 
         if(this.rocket_motion['N']){
-            vertical += PLAYER_SPEED
+            vertical += (PLAYER_SPEED * speed_mod * flip_mod)
         }
         if(this.rocket_motion['S']){
-            vertical -= PLAYER_SPEED
+            vertical -= (PLAYER_SPEED * speed_mod * flip_mod)
         }
         if(this.rocket_motion['E']){
-            horizontal += PLAYER_SPEED
+            horizontal += (PLAYER_SPEED * speed_mod)
         }
         if(this.rocket_motion['W']){
-            horizontal -= PLAYER_SPEED
+            horizontal -= (PLAYER_SPEED * speed_mod)
         }
         // ADD CHECKS FOR BLACK HOLE LATER
+        let black_hole_directions = this.black_hole_effect()
+        horizontal += black_hole_directions[0]
+        vertical += (black_hole_directions[1] * flip_mod)
 
         this.rocket_transform = this.rocket_transform.times(Mat4.translation(horizontal, vertical, 0))
+    }
+
+    activate_boost(){
+        // Should activate boost for 10 seconds
+            // INTEGRATE ONCE COLLISION DETECTIONS ARE READY
+        this.boost = true;
+        setTimeout(() => {this.boost = false}, 5000)
+    }
+
+    flip_rocket(){
+        this.flipped = true
+        let y_coord = this.rocket_transform[1][3]
+        this.rocket_transform = Mat4.identity().times(Mat4.scale(1, -1, 1))
+                                    .times(Mat4.translation(0, -2 * y_coord, 0))
+                                    .times(this.rocket_transform)
+    }
+
+    black_hole_effect(){
+        let result = [0, 0]
+        for(let i = 0; i < 2; i++){
+            let hole_coords = (this.black_hole_positions[i])
+
+            let sum = 0.0
+            // console.log(this.rocket_transform[0][3])
+            for(let j = 0; j < 2; j++){
+                sum += Math.pow((this.rocket_transform[j][3] - hole_coords[j][3]), 2)
+            }
+
+            // console.log(Math.sqrt(sum))
+            if(Math.sqrt(sum) < 15){                
+                if(this.rocket_transform[0][3] > hole_coords[0][3]){
+                    result[0] -= BLACK_HOLE_ATTRACT
+                }
+                else{
+                    result[0] += BLACK_HOLE_ATTRACT
+                }
+
+                if(this.rocket_transform[1][3] > hole_coords[1][3]){
+                    result[1] -= BLACK_HOLE_ATTRACT
+                }
+                else{
+                    result[1] += BLACK_HOLE_ATTRACT
+                }
+            }
+        }
+
+        return result
     }
 
     shake_camera(t, program_state) {
@@ -650,7 +739,7 @@ export class Space extends Scene {
         let model_transform = Mat4.identity()
         this.zoom_camera(t, program_state, {duration: 6, start_time: 2})
         this.spawn_objects(t, context, program_state, model_transform)
-        let hitbox = this.spawn_rocket(t, context, program_state, this.rocket_transform)
+        let hitbox = this.spawn_rocket(t, context, program_state)
         this.spawn_text(t, context, program_state, model_transform)
         this.move_rocket()
         this.spawn_healthbar(t, context, program_state, model_transform)

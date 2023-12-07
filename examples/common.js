@@ -832,6 +832,68 @@ const Invisible_Shader = defs.Invisible_Shader =
         }
     }
 
+const Bubble_Shader = defs.Bubble_Shader =
+    class Bubble_Shader extends Shader {
+        update_GPU(context, gpu_addresses, graphics_state, model_transform, material) {
+            // update_GPU():  Defining how to synchronize our JavaScript's variables to the GPU's:
+            const [P, C, M] = [graphics_state.projection_transform, graphics_state.camera_inverse, model_transform],
+                PCM = P.times(C).times(M);
+            context.uniformMatrix4fv(gpu_addresses.model_transform, false, Matrix.flatten_2D_to_1D(model_transform.transposed()));
+            context.uniformMatrix4fv(gpu_addresses.projection_camera_model_transform, false,
+                Matrix.flatten_2D_to_1D(PCM.transposed()));
+            context.uniform4fv(gpu_addresses.shape_color, material.color);
+    
+        }
+    
+        shared_glsl_code() {
+            // ********* SHARED CODE, INCLUDED IN BOTH SHADERS *********
+            return `
+            precision mediump float;
+            varying vec4 point_position;
+            varying vec4 center;
+            uniform vec4 shape_color;
+            `;
+        }
+    
+        vertex_glsl_code() {
+            // ********* VERTEX SHADER *********
+            // TODO:  Complete the main function of the vertex shader (Extra Credit Part II).
+            return this.shared_glsl_code() + `
+            attribute vec3 position;
+            uniform mat4 model_transform;
+            uniform mat4 projection_camera_model_transform;
+            
+            void main(){
+                gl_Position = projection_camera_model_transform * vec4( position, 1.0);
+                point_position = vec4( position, 1.0);
+            }`;
+        }
+    
+        fragment_glsl_code() {
+            // ********* FRAGMENT SHADER *********
+            // TODO:  Complete the main function of the fragment shader (Extra Credit Part II).
+    
+            return this.shared_glsl_code() + `
+    
+            void main(){
+                float temp = ((point_position.x - center.x) * (point_position.x - center.x)) + ((point_position.y - center.y) * (point_position.y - center.y));
+                
+                float factor = 0.0;
+    
+                if (sin(temp * 200.0) > 0.0){
+                    factor = 1.0;
+                }
+                else {
+                    factor = 0.0;
+                }
+                
+                vec4 mixed_color = vec4(shape_color.xyz, factor);
+    
+                gl_FragColor = mixed_color;
+            }`;
+        }
+    }
+
 const Textured_Phong = defs.Textured_Phong =
     class Textured_Phong extends Phong_Shader {
         // **Textured_Phong** is a Phong Shader extended to addditionally decal a

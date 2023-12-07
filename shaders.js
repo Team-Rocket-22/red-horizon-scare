@@ -90,4 +90,4 @@ const Ring_Shader = shaders.Ring_Shader =
                 }
             }`;
         }
-    }
+    }    

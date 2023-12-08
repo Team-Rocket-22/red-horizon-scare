@@ -11,6 +11,7 @@ const {
 const {Textured_Phong} = defs
 const PLAYER_SPEED = 0.12;
 const INVINCIBILITY_TIME = 3000;
+const HURT_TIME = 1000;
 const SHIELD_DESTROY_TIME = 1000;
 const BLACK_HOLE_ATTRACT = 0.05
 const CAMERA = {
@@ -164,6 +165,7 @@ export class Space extends Scene {
         this.shield = false
         this.boost = false
         this.flipped = false
+        this.hurt = false
 
         // When colliding with an object, manipulate this to give the player small time of invincibility
         this.isInvincible = false
@@ -337,6 +339,10 @@ export class Space extends Scene {
                     setTimeout(() => {
                         this.isInvincible = false;
                     }, INVINCIBILITY_TIME);
+                    this.hurt = true
+                    setTimeout(() => {
+                        this.hurt = false;
+                    }, HURT_TIME);
                 }
                 else if (!this.isInvincible && this.shield) {
                     console.log("Shield Destroyed")
@@ -345,6 +351,10 @@ export class Space extends Scene {
                     setTimeout(() => {
                         this.isInvincible = false;
                     }, SHIELD_DESTROY_TIME);
+                    this.hurt = true
+                    setTimeout(() => {
+                        this.hurt = false;
+                    }, HURT_TIME);
                 }
                 
         }
@@ -682,7 +692,7 @@ export class Space extends Scene {
 
     activate_boost(){
         this.boost = true;
-        setTimeout(() => {this.boost = false}, 5000)
+        setTimeout(() => {this.boost = false}, 10000)
     }
 
     flip_rocket(){
@@ -789,12 +799,12 @@ export class Space extends Scene {
 
         program_state.set_camera(this.stay_camera_location);
 
-        // if (t >= 15 && t <= 15.5) {
-        //     this.shake_camera(t, program_state)
-        // }
-        // else {
-        //     program_state.set_camera(this.stay_camera_location);
-        // }
+        if (this.hurt) {
+            this.shake_camera(t, program_state)
+        }
+        else {
+            program_state.set_camera(this.stay_camera_location);
+        }
 
         let model_transform = Mat4.identity()
         this.zoom_camera(t, program_state, {duration: 6, start_time: 2})

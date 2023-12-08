@@ -115,14 +115,18 @@ export class Space extends Scene {
         this.background_images = ["/assets/stars.jpeg", "/assets/space_1.avif", "/assets/galaxy.webp", "/assets/purple_space.avif"]
         this.current_background = 0
         this.alien_positions = []
+        this.alien_collisions = {}
+        this.laser_collisions = {}
         for (let i = 0; i < 7; i++) {
             this.alien_positions.push(Math.floor(Math.random() * (60) - 30 ))
         }
         this.satellite_positions_left = []
+        this.satellite_collisions_left = {}
         for (let i = 0; i < 12; i++) {
             this.satellite_positions_left.push(Math.floor(Math.random() * (80) - 80 ))
         }
         this.satellite_positions_right = []
+        this.satellite_collisions_right = {}
         for (let i = 0; i < 12; i++) {
             this.satellite_positions_right.push(Math.floor(Math.random() * (80) - 0 ))
         }
@@ -136,6 +140,7 @@ export class Space extends Scene {
         this.hp = 3
 
         this.asteroids = []
+        this.asteroid_positions = {}
         for (let i = 0; i < 15; i++) {
             let ast = new Asteroid()
             this.asteroids.push(ast)
@@ -144,7 +149,7 @@ export class Space extends Scene {
         this.black_hole_positions = []
         this.black_hole_positions.push(Mat4.translation(Math.floor(Math.random() * (25) + 6), Math.floor(Math.random() * (33) - 18), 0))
         this.black_hole_positions.push(Mat4.translation(Math.floor(Math.random() * (25) -30), Math.floor(Math.random() * (33) - 18), 0))
- 
+        
         // user-controlled rocket movement for next frame in North, South, East, and West
         this.rocket_motion = {
             'N': false,
@@ -188,6 +193,7 @@ export class Space extends Scene {
         for (let i = 0; i < this.asteroids.length; i++) {
             let ast_transform = model_transform
             ast_transform = ast_transform.times(Mat4.rotation(this.asteroids[i].angle, 0, 1, 0)).times(Mat4.translation(this.asteroids[i].xPos, 150 + (i * 5), 0)).times(Mat4.scale(1, 1.5, 1)).times(Mat4.translation(0, (-(t%100) * 7), 0))
+            this.asteroid_positions[i] = ast_transform;
             this.asteroids[i].draw(context, program_state, ast_transform, this.materials.asteroid)
         }
     }
@@ -197,7 +203,7 @@ export class Space extends Scene {
         for (let i = 0; i < this.alien_positions.length; i++) {
             aliens[i] = model_transform
             aliens[i] = aliens[i].times(Mat4.translation(this.alien_positions[i], 30 + (i * 5), 0)).times(Mat4.scale(1, 1.5, 1)).times(Mat4.translation(0, -(t % 10) * 7, 0))
-            this.spawn_alienship(t, spawn, context, program_state, aliens[i])
+            this.spawn_alienship(t, spawn, context, program_state, aliens[i], i)
         }
     }
 
@@ -206,7 +212,7 @@ export class Space extends Scene {
         for (let i = 0; i < this.satellite_positions_right.length; i++) {
             satellites_right[i] = model_transform
             satellites_right[i] = satellites_right[i].times(Mat4.translation(this.satellite_positions_right[i], 30 + (i * 5), 0)).times(Mat4.scale(1, 1.5, 1)).times(Mat4.translation(0, -(t % 10) * 7, 0))
-            this.spawn_satellite_right(t, context, program_state, satellites_right[i])
+            this.spawn_satellite_right(t, context, program_state, satellites_right[i], i)
         }
     }
 
@@ -215,7 +221,8 @@ export class Space extends Scene {
         for (let i = 0; i < this.satellite_positions_left.length; i++) {
             satellites_left[i] = model_transform
             satellites_left[i] = satellites_left[i].times(Mat4.translation(this.satellite_positions_left[i], 30 + (i * 5), 0)).times(Mat4.scale(1, 1.5, 1)).times(Mat4.translation(0, -(t % 10) * 7, 0))
-            this.spawn_satellite_left(t, context, program_state, satellites_left[i])
+            this.satellite_collisions_left[i] = satellites_left[i]
+            this.spawn_satellite_left(t, context, program_state, satellites_left[i], i)
         }
     }
 
@@ -299,7 +306,7 @@ export class Space extends Scene {
         return rocket_hitbox_transform;
     }
 
-    detect_collisions(t, context, program_state, hitbox_transform, object_list, type, max_dist) {
+    detect_collisions(hitbox_transform, object_list, type, max_dist) {
         for (let i = 0; i < object_list.length; i++) {
             if (this.compute_distance(hitbox_transform, object_list[i], max_dist)) {
                 this.handle_collision(type)
@@ -308,15 +315,24 @@ export class Space extends Scene {
     }
 
     handle_collision(type = "default") {
-        if (type === "blackhole") {
-            this.hp = 0
-        }
-        else if (!this.isInvincible) {
-            this.isInvincible = true
-            this.hp -= 1
-            setTimeout(() => {
-                this.isInvincible = false;
-            }, INVINCIBILITY_TIME);
+        switch(type) {
+            case("Blackhole"):
+                this.hp = 0
+                console.log("Died to Black Hole")
+                break
+            case("Speedup"):
+                this.activate_boost()
+                console.log("Boost activated")
+                break
+            default:
+                if (!this.isInvincible) {
+                    console.log(`Hit by ${type}`)
+                    this.isInvincible = true
+                    this.hp -= 1
+                    setTimeout(() => {
+                        this.isInvincible = false;
+                    }, INVINCIBILITY_TIME);
+                }
         }
     }
 
@@ -339,7 +355,7 @@ export class Space extends Scene {
         }
     }
 
-    shoot_laser(t, spawn, context, program_state, model_transform) {
+    shoot_laser(t, spawn, context, program_state, model_transform, i) {
         const downward_speed = 9;
             
         const animate_laser = () => {
@@ -349,13 +365,14 @@ export class Space extends Scene {
             const laser_transform = model_transform
                 .times(Mat4.translation(0, 0, 0))
                 .times(Mat4.scale(.6, .6, .6))
+            this.laser_collisions[i] = laser_transform
             this.shapes.laser.draw(context, program_state, laser_transform, this.materials.laser);
         }
 
         animate_laser(t)
     }
 
-    spawn_alienship(t, spawn, context, program_state, model_transform) {
+    spawn_alienship(t, spawn, context, program_state, model_transform, i) {
         const downward_speed = 12;
 
         const animate_ship = () => {
@@ -369,8 +386,9 @@ export class Space extends Scene {
             .times(Mat4.scale(5/3, 5/3, 1/3))
     
             // Draw the disk body of the alien ship
+            this.alien_collisions[i] = alien_ship_transform
             this.shapes.alien_ship_body.draw(context, program_state, alien_ship_transform, this.materials.alien_ship_body);
-    
+
             // Position and draw the half-sphere head of the alien ship
             const head_transform = alien_ship_transform
                 .times(Mat4.translation(0, 0, -.2 * 1/3)) 
@@ -386,18 +404,18 @@ export class Space extends Scene {
             
             this.shapes.alien_ship_guns.draw(context, program_state, gun_transform_left, this.materials.alien_ship_guns);
             this.shapes.alien_ship_guns.draw(context, program_state, gun_transform_right, this.materials.alien_ship_guns);
-            this.shoot_laser(t, spawn, context, program_state, gun_transform_left)
-            this.shoot_laser(t, spawn, context, program_state, gun_transform_right)
+            this.shoot_laser(t, spawn, context, program_state, gun_transform_left, i)
+            this.shoot_laser(t, spawn, context, program_state, gun_transform_right, i)
         }
 
         animate_ship()
     }
 
-    // TODO: add texture to satellite
-    spawn_satellite_left(t, context, program_state, model_transform) {
+    spawn_satellite_left(t, context, program_state, model_transform, i) {
         const speed = 12
         let satellite_transform = model_transform;
         satellite_transform = satellite_transform.times(Mat4.translation(speed * t, 0, 0)).times(Mat4.rotation(Math.PI / 2, 1, 0, 0)).times(Mat4.scale(.5, .5, 2));
+        this.satellite_collisions_left[i] = satellite_transform
         this.shapes.satellite.draw(context, program_state, satellite_transform, this.materials.satellite);
 
         let solar1_transform = satellite_transform;
@@ -414,10 +432,11 @@ export class Space extends Scene {
         this.shapes.satellite_tail.draw(context, program_state, tail_transform, this.materials.satellite_tail);
     }
 
-    spawn_satellite_right(t, context, program_state, model_transform) {
+    spawn_satellite_right(t, context, program_state, model_transform, i) {
         const speed = 12
         let satellite_transform = model_transform;
         satellite_transform = satellite_transform.times(Mat4.translation(-speed * t, 0, 0)).times(Mat4.rotation(Math.PI / 2, 1, 0, 0)).times(Mat4.scale(.5, .5, 2));
+        this.satellite_collisions_right[i] = satellite_transform
         this.shapes.satellite.draw(context, program_state, satellite_transform, this.materials.satellite);
 
         let solar1_transform = satellite_transform;
@@ -774,13 +793,13 @@ export class Space extends Scene {
         let hitbox = this.spawn_rocket(t, context, program_state)
         this.move_rocket()
         this.spawn_healthbar(t, context, program_state, model_transform)
-  
-        this.detect_collisions(t, context, program_state, hitbox, this.black_hole_positions, "blackhole", 2);  // we can change max_dist accordingly
-
+        
         let model_transform_speed_up_left = Mat4.identity().times(Mat4.translation(-4, 25, 0)).times(Mat4.translation(-0.335, 0, 0)).times(Mat4.rotation(Math.PI / 6, 0, 0, 1)).times(Mat4.scale(6, 2, 1)).times(Mat4.scale(0.08, 0.08, 0.08));
         model_transform_speed_up_left = this.spawn_speed_up(t, context, program_state, model_transform_speed_up_left)
         let model_transform_speed_up_right = Mat4.identity().times(Mat4.translation(-4, 25, 0)).times(Mat4.translation(0.335, 0, 0)).times(Mat4.rotation(-Math.PI / 6, 0, 0, 1)).times(Mat4.scale(6, 2, 1)).times(Mat4.scale(0.08, 0.08, 0.08));
         model_transform_speed_up_right = this.spawn_speed_up(t, context, program_state, model_transform_speed_up_right)
+
+        let speed_up_collisions = [model_transform_speed_up_left, model_transform_speed_up_right]
 
         let model_transform_shield = Mat4.identity().times(Mat4.translation(6, 20, 0)).times(Mat4.scale(1.5, 1.5, 1.5));
         model_transform_shield = this.spawn_shield(t, context, program_state, model_transform_shield)
@@ -793,5 +812,14 @@ export class Space extends Scene {
 
         let model_transform_e_arrive = Mat4.identity().times(Mat4.translation(0, -80, -15)).times(Mat4.scale(20, 20, 20));
         model_transform_e_arrive = this.arrive_earth(t, context, program_state, model_transform_e_arrive);
+
+        // Detecting collisions between objects and rocket
+        this.detect_collisions(hitbox, this.black_hole_positions, "Blackhole", 1.5);
+        this.detect_collisions(hitbox, Object.values(this.asteroid_positions), "Asteroid", 1.5);
+        this.detect_collisions(hitbox, Object.values(this.alien_collisions), "Alien", 1.5);
+        this.detect_collisions(hitbox, speed_up_collisions, "Speedup", 1.5);
+        this.detect_collisions(hitbox, Object.values(this.satellite_collisions_left), "Sattelite", 1.5);
+        this.detect_collisions(hitbox, Object.values(this.satellite_collisions_right), "Sattelite", 1.5);
+        this.detect_collisions(hitbox, Object.values(this.laser_collisions), "Laser", 1.5);
     }
 }

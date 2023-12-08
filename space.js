@@ -139,6 +139,9 @@ export class Space extends Scene {
         // this.initial_camera_location = Mat4.look_at(vec3(0, 10, CAMERA.INIT_Z), vec3(0, 0, 0), vec3(0, 1, 0));
         this.stay_camera_location = Mat4.look_at(vec3(0, 10, CAMERA.INIT_Z), vec3(0, 0, 0), vec3(0, 1, 0));
 
+        this.speed_up_state = true
+        this.shield_state = true
+
         this.hp = 3
 
         this.asteroids = []
@@ -325,10 +328,12 @@ export class Space extends Scene {
                 break
             case("Speedup"):
                 this.activate_boost()
+                this.speed_up_state = false
                 console.log("Boost Activated")
                 break
             case("Shield"):
                 this.shield = true
+                this.shield_state = false
                 console.log("Shield Activated")
                 break
             default:
@@ -478,7 +483,7 @@ export class Space extends Scene {
     }
 
     spawn_speed_up(t, context, program_state, model_transform) {
-        if (t > 40 && t <= 58) {
+        if (this.speed_up_state && t > 40 && t <= 58) {
             model_transform = Mat4.identity().times(Mat4.translation(0, -3 * (t - 40), 0)).times(model_transform);
             this.shapes.speed_up.draw(context, program_state, model_transform, this.materials.speed_up);
             model_transform = Mat4.identity().times(Mat4.translation(0, -1, 0)).times(model_transform);
@@ -490,7 +495,7 @@ export class Space extends Scene {
     }
 
     spawn_shield(t, context, program_state, model_transform) {
-        if (t >= 3 && t <= 16) {
+        if (this.shield_state && t >= 3 && t <= 16) {
             model_transform = Mat4.identity().times(Mat4.translation(0, -5 * (t - 3), 0)).times(model_transform);
             this.shapes.shield.draw(context, program_state, model_transform, this.materials.shield);
         }

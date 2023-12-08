@@ -599,13 +599,13 @@ export class Space extends Scene {
 
         // Ends the game if the user dies
         if (this.hp === 0) {
-            let gameOver_transfrom = model_transform.times(Mat4.translation(-11, 10, 0)).times(Mat4.scale(2, 2, 2));
-            const gameOver_text = "You died!"
+            let gameOver_transfrom = model_transform.times(Mat4.translation(-13.5, 10, 0)).times(Mat4.scale(2, 2, 2));
+            const gameOver_text = "GAME OVER!"
             this.shapes.text_test.set_string(gameOver_text, context.context)
             this.shapes.text_test.draw(context, program_state, gameOver_transfrom, this.materials.text_test);
 
-            let refresh_transform = model_transform.times(Mat4.translation(-10, 6, 0)).times(Mat4.scale(.85, 0.85, 0.85))
-            const refreshGame_text = "Refresh to Restart"
+            let refresh_transform = model_transform.times(Mat4.translation(-11, 6, 0)).times(Mat4.scale(.85, 0.85, 0.85))
+            const refreshGame_text = "Refresh To Restart"
             this.shapes.text_test.set_string(refreshGame_text, context.context)
             this.shapes.text_test.draw(context, program_state, refresh_transform, this.materials.text_test);
             return true

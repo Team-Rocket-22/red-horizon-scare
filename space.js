@@ -10,6 +10,7 @@ const {
 
 const {Textured_Phong} = defs
 const PLAYER_SPEED = 0.12;
+const INVINCIBILITY_TIME = 3000;
 const BLACK_HOLE_ATTRACT = 0.05
 const CAMERA = {
     INIT_Z: 10,
@@ -157,6 +158,9 @@ export class Space extends Scene {
         this.shield = false
         this.boost = false
         this.flipped = false
+
+        // When colliding with an object, manipulate this to give the player small time of invincibility
+        this.isInvincible = false
     }
 
 
@@ -298,15 +302,21 @@ export class Space extends Scene {
     detect_collisions(t, context, program_state, hitbox_transform, object_list, type, max_dist) {
         for (let i = 0; i < object_list.length; i++) {
             if (this.compute_distance(hitbox_transform, object_list[i], max_dist)) {
-                switch(type) {
-                    case("blackhole"):
-                        console.log("Died in blackhole")
-                        break;
-                    default:
-                        console.log("close")
-                }
-                // console.log("not close")
+                this.handle_collision(type)
             }
+        }
+    }
+
+    handle_collision(type = "default") {
+        if (type === "blackhole") {
+            this.hp = 0
+        }
+        else if (!this.isInvincible) {
+            this.isInvincible = true
+            this.hp -= 1
+            setTimeout(() => {
+                this.isInvincible = false;
+            }, INVINCIBILITY_TIME);
         }
     }
 
@@ -537,49 +547,67 @@ export class Space extends Scene {
     }
 
     spawn_text(t, context, program_state, model_transform) {
-        // spawn text
-        if ((t >= 0 && t <= 11.5)) {
-            let model_transform_1 = model_transform.times(Mat4.translation(-12, 10, -20))
-            const text_1 = "Red Horizon Scare"
-            this.shapes.text_test.set_string(text_1, context.context)
-            this.shapes.text_test.draw(context, program_state, model_transform_1, this.materials.text_test)
 
-            // transform the text downwards
-            let model_transform_2 = model_transform_1.times(Mat4.translation(3, -4, 0))
-            const text_2 = "Don't Get Hit"
-            this.shapes.text_test.set_string(text_2, context.context)
-            this.shapes.text_test.draw(context, program_state, model_transform_2, this.materials.text_test)
+        // Ends the game if the user dies
+        if (this.hp === 0) {
+            let gameOver_transfrom = model_transform.times(Mat4.translation(-11, 10, 0)).times(Mat4.scale(2, 2, 2));
+            const gameOver_text = "You died!"
+            this.shapes.text_test.set_string(gameOver_text, context.context)
+            this.shapes.text_test.draw(context, program_state, gameOver_transfrom, this.materials.text_test);
 
-            // transform the text downwards
-            let model_transform_3 = model_transform_2.times(Mat4.translation(-3, -4, 0))
-            const text_3 = "Collect Power-Ups"
-            this.shapes.text_test.set_string(text_3, context.context)
-            this.shapes.text_test.draw(context, program_state, model_transform_3, this.materials.text_test)
+            let refresh_transform = model_transform.times(Mat4.translation(-10, 6, 0)).times(Mat4.scale(.85, 0.85, 0.85))
+            const refreshGame_text = "Refresh to Restart"
+            this.shapes.text_test.set_string(refreshGame_text, context.context)
+            this.shapes.text_test.draw(context, program_state, refresh_transform, this.materials.text_test);
+            return true
         }
+        else {
+            // spawn text
+            if ((t >= 0 && t <= 11.5)) {
+                let model_transform_1 = model_transform.times(Mat4.translation(-12, 10, -20))
+                const text_1 = "Red Horizon Scare"
+                this.shapes.text_test.set_string(text_1, context.context)
+                this.shapes.text_test.draw(context, program_state, model_transform_1, this.materials.text_test)
 
-        if ((t >= 55 && t <= 60)) {
-            if(!this.flipped){
-                this.flip_rocket()
+                // transform the text downwards
+                let model_transform_2 = model_transform_1.times(Mat4.translation(3, -4, 0))
+                const text_2 = "Don't Get Hit"
+                this.shapes.text_test.set_string(text_2, context.context)
+                this.shapes.text_test.draw(context, program_state, model_transform_2, this.materials.text_test)
+
+                // transform the text downwards
+                let model_transform_3 = model_transform_2.times(Mat4.translation(-3, -4, 0))
+                const text_3 = "Collect Power-Ups"
+                this.shapes.text_test.set_string(text_3, context.context)
+                this.shapes.text_test.draw(context, program_state, model_transform_3, this.materials.text_test)
             }
-            
-            let model_transform_4 = model_transform.times(Mat4.translation(-4, 0, -20))
-            const text_4 = "Danger!"
-            this.shapes.text_test.set_string(text_4, context.context)
-            this.shapes.text_test.draw(context, program_state, model_transform_4, this.materials.text_test)
 
-            // transform the text downwards
-            let model_transform_5 = model_transform_4.times(Mat4.translation(1, -5, 0))
-            const text_5 = "Abort."
-            this.shapes.text_test.set_string(text_5, context.context)
-            this.shapes.text_test.draw(context, program_state, model_transform_5, this.materials.text_test)
-        }
+            if ((t >= 55 && t <= 60)) {
+                if(!this.flipped){
+                    this.flip_rocket()
+                }
+                
+                let model_transform_4 = model_transform.times(Mat4.translation(-4, 0, -20))
+                const text_4 = "Danger!"
+                this.shapes.text_test.set_string(text_4, context.context)
+                this.shapes.text_test.draw(context, program_state, model_transform_4, this.materials.text_test)
 
-        if ((t >= 120)) {
-            let model_transform_6 = model_transform.times(Mat4.translation(-12, 10, -20))
-            const text_6 = "You Made It Home!"
-            this.shapes.text_test.set_string(text_6, context.context)
-            this.shapes.text_test.draw(context, program_state, model_transform_6, this.materials.text_test)
+                // transform the text downwards
+                let model_transform_5 = model_transform_4.times(Mat4.translation(1, -5, 0))
+                const text_5 = "Abort."
+                this.shapes.text_test.set_string(text_5, context.context)
+                this.shapes.text_test.draw(context, program_state, model_transform_5, this.materials.text_test)
+            }
+
+            if ((t >= 120)) {
+                let model_transform_6 = model_transform.times(Mat4.translation(-12, 10, -20))
+                const text_6 = "You Made It Home!"
+                this.shapes.text_test.set_string(text_6, context.context)
+                this.shapes.text_test.draw(context, program_state, model_transform_6, this.materials.text_test)
+            }
+            return false
         }
+        
     }
 
     move_rocket(){
@@ -738,13 +766,16 @@ export class Space extends Scene {
 
         let model_transform = Mat4.identity()
         this.zoom_camera(t, program_state, {duration: 6, start_time: 2})
+        let isGameOver = this.spawn_text(t, context, program_state, model_transform)
+        if (isGameOver) {
+            return;
+        }
         this.spawn_objects(t, context, program_state, model_transform)
         let hitbox = this.spawn_rocket(t, context, program_state)
-        this.spawn_text(t, context, program_state, model_transform)
         this.move_rocket()
         this.spawn_healthbar(t, context, program_state, model_transform)
   
-        this.detect_collisions(t, context, program_state, hitbox, this.black_hole_positions, "blackhole", 4);  // we can change max_dist accordingly
+        this.detect_collisions(t, context, program_state, hitbox, this.black_hole_positions, "blackhole", 2);  // we can change max_dist accordingly
 
         let model_transform_speed_up_left = Mat4.identity().times(Mat4.translation(-4, 25, 0)).times(Mat4.translation(-0.335, 0, 0)).times(Mat4.rotation(Math.PI / 6, 0, 0, 1)).times(Mat4.scale(6, 2, 1)).times(Mat4.scale(0.08, 0.08, 0.08));
         model_transform_speed_up_left = this.spawn_speed_up(t, context, program_state, model_transform_speed_up_left)

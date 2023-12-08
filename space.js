@@ -11,6 +11,7 @@ const {
 const {Textured_Phong} = defs
 const PLAYER_SPEED = 0.12;
 const INVINCIBILITY_TIME = 3000;
+const SHIELD_DESTROY_TIME = 1000;
 const BLACK_HOLE_ATTRACT = 0.05
 const CAMERA = {
     INIT_Z: 10,
@@ -322,10 +323,14 @@ export class Space extends Scene {
                 break
             case("Speedup"):
                 this.activate_boost()
-                console.log("Boost activated")
+                console.log("Boost Activated")
+                break
+            case("Shield"):
+                this.shield = true
+                console.log("Shield Activated")
                 break
             default:
-                if (!this.isInvincible) {
+                if (!this.isInvincible && !this.shield) {
                     console.log(`Hit by ${type}`)
                     this.isInvincible = true
                     this.hp -= 1
@@ -333,6 +338,15 @@ export class Space extends Scene {
                         this.isInvincible = false;
                     }, INVINCIBILITY_TIME);
                 }
+                else if (!this.isInvincible && this.shield) {
+                    console.log("Shield Destroyed")
+                    this.isInvincible = true
+                    this.shield = false
+                    setTimeout(() => {
+                        this.isInvincible = false;
+                    }, SHIELD_DESTROY_TIME);
+                }
+                
         }
     }
 
@@ -667,8 +681,6 @@ export class Space extends Scene {
     }
 
     activate_boost(){
-        // Should activate boost for 10 seconds
-            // INTEGRATE ONCE COLLISION DETECTIONS ARE READY
         this.boost = true;
         setTimeout(() => {this.boost = false}, 5000)
     }
@@ -805,6 +817,8 @@ export class Space extends Scene {
         let model_transform_shield = Mat4.identity().times(Mat4.translation(6, 20, 0)).times(Mat4.scale(1.5, 1.5, 1.5));
         model_transform_shield = this.spawn_shield(t, context, program_state, model_transform_shield)
 
+        let shield_collisions = [model_transform_shield];
+
         let model_transform_e_leave = Mat4.identity().times(Mat4.translation(0, -30, -15)).times(Mat4.scale(20, 20, 20));
         model_transform_e_leave = this.leave_earth(t, context, program_state, model_transform_e_leave);
 
@@ -819,6 +833,7 @@ export class Space extends Scene {
         this.detect_collisions(hitbox, Object.values(this.asteroid_positions), "Asteroid", 1.5);
         this.detect_collisions(hitbox, Object.values(this.alien_collisions), "Alien", 1.5);
         this.detect_collisions(hitbox, speed_up_collisions, "Speedup", 1.5);
+        this.detect_collisions(hitbox, shield_collisions, "Shield", 1.5);
         this.detect_collisions(hitbox, Object.values(this.satellite_collisions_left), "Sattelite", 1.5);
         this.detect_collisions(hitbox, Object.values(this.satellite_collisions_right), "Sattelite", 1.5);
         this.detect_collisions(hitbox, Object.values(this.laser_collisions), "Laser", 1.5);

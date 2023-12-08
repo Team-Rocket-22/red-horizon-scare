@@ -11,7 +11,7 @@ const {
 const {Textured_Phong} = defs
 const PLAYER_SPEED = 0.12;
 const INVINCIBILITY_TIME = 3000;
-const HURT_TIME = 1000;
+const HURT_TIME = 500;
 const SHIELD_DESTROY_TIME = 1000;
 const BLACK_HOLE_ATTRACT = 0.05
 const CAMERA = {

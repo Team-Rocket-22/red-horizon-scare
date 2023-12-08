@@ -514,8 +514,9 @@ export class Space extends Scene {
 
     spawn_black_hole(t, context, program_state, model_transform) {
         let radius = 4 * Math.sin(Math.PI * t/15)
+        radius = radius.toFixed(2)
         radius = Math.max(-radius, radius)
-        if (radius < 0.5) {
+        if (radius == 0) {
             this.black_hole_positions[0] = (Mat4.translation(Math.floor(Math.random() * (25) + 6), Math.floor(Math.random() * (33) - 18), 0))
             this.black_hole_positions[1] = (Mat4.translation(Math.floor(Math.random() * (25) -30), Math.floor(Math.random() * (33) - 18), 0))
         }

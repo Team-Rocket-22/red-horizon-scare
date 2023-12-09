@@ -764,7 +764,7 @@ export class Space extends Scene {
 
     make_control_panel() {
         // Draw the scene's buttons, setup their actions and keyboard shortcuts, and monitor live measurements.
-        this.key_triggered_button("Change background color", ["b"], this.change_background);
+        this.key_triggered_button("Change background", ["b"], this.change_background);
         this.key_triggered_button("Change rocket color", ["c"], this.change_rocket_color);
         this.key_triggered_button("Move rocket up", ["w"], 
                                     function() { this.rocket_motion['N'] = true},
